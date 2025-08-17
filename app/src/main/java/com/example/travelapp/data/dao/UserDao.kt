@@ -1,8 +1,10 @@
 package com.example.travelapp.data.dao
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import com.example.travelapp.data.model.Trip
 import com.example.travelapp.data.model.User
 import kotlinx.coroutines.flow.Flow
 
@@ -13,4 +15,7 @@ interface UserDao {
 
     @Insert
     suspend fun insertUser(user: User)
+
+    @Delete
+    suspend fun deleteUser(user: User)
 }
