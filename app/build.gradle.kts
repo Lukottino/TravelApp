@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("kotlin-kapt")
 }
 
 android {
@@ -44,7 +45,11 @@ android {
 }
 
 dependencies {
+    implementation("androidx.room:room-runtime:2.6.1")
+    kapt("androidx.room:room-compiler:2.6.1")  // serve per generare codice
+    implementation("androidx.room:room-ktx:2.6.1") // supporto coroutine Kotlin
     implementation("org.osmdroid:osmdroid-android:6.1.16")
+    implementation("androidx.compose.material:material-icons-extended:1.6.4")
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
