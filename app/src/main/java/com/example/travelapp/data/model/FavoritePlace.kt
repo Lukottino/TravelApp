@@ -3,10 +3,10 @@ package com.example.travelapp.data.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "users")
-data class User(
+@Entity
+data class FavoritePlace(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
     val name: String,
-    val email: String,
-    val avatarUrl: String?
+    val latitude: Double,
+    val longitude: Double
 )

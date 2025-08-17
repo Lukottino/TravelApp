@@ -1,3 +1,6 @@
+package com.example.travelapp.data.dao
+
+import User
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query

@@ -46,6 +46,7 @@ android {
 
 dependencies {
     implementation("androidx.room:room-runtime:2.6.1")
+    implementation(libs.firebase.firestore.ktx)
     kapt("androidx.room:room-compiler:2.6.1")  // serve per generare codice
     implementation("androidx.room:room-ktx:2.6.1") // supporto coroutine Kotlin
     implementation("org.osmdroid:osmdroid-android:6.1.16")
