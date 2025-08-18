@@ -6,9 +6,8 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "trips")
 data class Trip(
     @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val title: String,
-    val description: String,
-    val date: String,
-    val latitude: Double?,
-    val longitude: Double?
+    val destination: String,
+    val startDate: Long,
+    val endDate: Long?,
+    val notes: String? = null
 )

@@ -1,5 +1,6 @@
 package com.example.travelapp.data.dao
 
+import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -12,7 +13,7 @@ import kotlinx.coroutines.flow.Flow
 interface TripDao {
 
     @Query("SELECT * FROM trips")
-    fun getAllTrips(): Flow<List<Trip>>
+    fun getAllTrips(): LiveData<List<Trip>>
 
     @Insert
     suspend fun insertTrip(trip: Trip)
