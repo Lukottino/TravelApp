@@ -24,8 +24,12 @@ fun TravelApp(viewModel: AppViewModel) {
     val navController = rememberNavController()
 
     val startDestination = if (loggedUserId != null) "home" else "login"
+
+    // Determina se mostrare la BottomBar
+    val showBottomBar = loggedUserId != null
+
     Scaffold(
-        bottomBar = { BottomBar(navController) }
+        bottomBar = { if (showBottomBar) BottomBar(navController) }
     ) { innerPadding ->
         NavHost(
             navController = navController,
@@ -37,9 +41,7 @@ fun TravelApp(viewModel: AppViewModel) {
                     viewModel,
                     onLoginSuccess = {
                         navController.navigate("home") {
-                            popUpTo("login") {
-                                inclusive = true
-                            }
+                            popUpTo("login") { inclusive = true }
                         }
                     },
                     onNavigateToRegister = { navController.navigate("register") }
@@ -50,9 +52,7 @@ fun TravelApp(viewModel: AppViewModel) {
                     viewModel,
                     onRegisterSuccess = {
                         navController.navigate("home") {
-                            popUpTo("register") {
-                                inclusive = true
-                            }
+                            popUpTo("register") { inclusive = true }
                         }
                     }
                 )
@@ -61,7 +61,14 @@ fun TravelApp(viewModel: AppViewModel) {
             composable("trips") { TripsScreen(viewModel) }
             composable("add") { AddTripScreen(viewModel) }
             composable("map") { MapScreen(viewModel) }
-            composable("profile") { ProfileScreen(viewModel) }
+            composable("profile") {
+                ProfileScreen(viewModel) {
+                    // Logout callback
+                    navController.navigate("login") {
+                        popUpTo("home") { inclusive = true }
+                    }
+                }
+            }
         }
     }
 }

@@ -15,28 +15,28 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.travelapp.R
+import com.example.travelapp.data.UserPreferences
 import com.example.travelapp.data.model.User
 import com.example.travelapp.viewmodel.AppViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
-fun ProfileScreen(viewModel: AppViewModel) {
-    // se allUsers è LiveData
+fun ProfileScreen(viewModel: AppViewModel, onLogout: () -> Unit) {
+    val context = LocalContext.current
     val users by viewModel.allUsers.observeAsState(emptyList())
+    val loggedUserId by UserPreferences.getUserId(context).collectAsState(initial = null)
 
-    // se invece è Flow<List<User>>
-    // val users by viewModel.allUsers.collectAsState(initial = emptyList())
-
-    val user = users.firstOrNull() ?: User(
-        id = 0,
-        name = "Mario Rossi",
-        email = "mario.rossi@example.com",
-        password = "ciao123"
-    )
+    // Trova l'utente corrente usando l'ID loggato
+    val currentUser = users.firstOrNull { it.id == loggedUserId }
 
     Column(
         modifier = Modifier
@@ -59,14 +59,14 @@ fun ProfileScreen(viewModel: AppViewModel) {
         Spacer(modifier = Modifier.height(16.dp))
 
         Text(
-            text = user.name,
+            text = currentUser?.name ?: "Utente sconosciuto",
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = Color.Black
         )
 
         Text(
-            text = user.email,
+            text = currentUser?.email ?: "N/A",
             fontSize = 16.sp,
             color = Color.DarkGray
         )
@@ -84,7 +84,13 @@ fun ProfileScreen(viewModel: AppViewModel) {
         Spacer(modifier = Modifier.height(12.dp))
 
         Button(
-            onClick = { /* TODO: logout */ },
+            onClick = {
+                // Logout
+                CoroutineScope(Dispatchers.IO).launch {
+                    UserPreferences.clearUserId(context)
+                    withContext(Dispatchers.Main) { onLogout() }
+                }
+            },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.medium
