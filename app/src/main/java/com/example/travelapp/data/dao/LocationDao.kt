@@ -1,18 +1,16 @@
 package com.example.travelapp.data.dao
 
 import androidx.lifecycle.LiveData
-import androidx.room.*
+import androidx.room.Dao
+import androidx.room.Insert
+import androidx.room.Query
 import com.example.travelapp.data.model.LocationLog
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface LocationDao {
-    @Query("SELECT * FROM LocationLog ORDER BY timestamp DESC")
+    @Query("SELECT * FROM location_logs")   // deve corrispondere a tableName!
     fun getAllLocations(): LiveData<List<LocationLog>>
 
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Insert
     suspend fun insertLocation(location: LocationLog)
-
-    @Delete
-    suspend fun deleteLocation(location: LocationLog)
 }

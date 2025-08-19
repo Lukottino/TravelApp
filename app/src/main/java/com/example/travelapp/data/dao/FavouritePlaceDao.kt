@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface FavoritePlaceDao {
-    @Query("SELECT * FROM FavoritePlace")
+    @Query("SELECT * FROM favorite_places")
     fun getAllFavorites(): LiveData<List<FavoritePlace>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

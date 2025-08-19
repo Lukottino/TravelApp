@@ -7,7 +7,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface SettingsDao {
-    @Query("SELECT * FROM Settings LIMIT 1")
+    @Query("SELECT * FROM settings LIMIT 1")
     fun getSettings(): LiveData<Settings?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)

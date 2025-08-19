@@ -1,5 +1,8 @@
 package com.example.travelapp
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.foundation.Image
@@ -17,14 +20,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.travelapp.R
+import com.example.travelapp.data.model.User
+import com.example.travelapp.viewmodel.AppViewModel
 
 @Composable
-fun ProfileScreen(
-    userName: String = "Mario Rossi",
-    email: String = "mario.rossi@example.com",
-    onEditProfile: () -> Unit = {},
-    onLogout: () -> Unit = {}
-) {
+fun ProfileScreen(viewModel: AppViewModel) {
+    // se allUsers è LiveData
+    val users by viewModel.allUsers.observeAsState(emptyList())
+
+    // se invece è Flow<List<User>>
+    // val users by viewModel.allUsers.collectAsState(initial = emptyList())
+
+    val user = users.firstOrNull() ?: User(
+        id = 0,
+        name = "Mario Rossi",
+        email = "mario.rossi@example.com"
+    )
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -34,7 +46,6 @@ fun ProfileScreen(
     ) {
         Spacer(modifier = Modifier.height(32.dp))
 
-        // Foto profilo
         Icon(
             imageVector = Icons.Filled.AccountCircle,
             contentDescription = "Foto profilo",
@@ -46,26 +57,23 @@ fun ProfileScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Nome utente
         Text(
-            text = userName,
+            text = user.name,
             fontSize = 22.sp,
             fontWeight = FontWeight.Bold,
             color = Color.Black
         )
 
-        // Email
         Text(
-            text = email,
+            text = user.email,
             fontSize = 16.sp,
             color = Color.DarkGray
         )
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        // Pulsanti azione
         Button(
-            onClick = onEditProfile,
+            onClick = { /* TODO: modifica profilo */ },
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.medium
         ) {
@@ -75,7 +83,7 @@ fun ProfileScreen(
         Spacer(modifier = Modifier.height(12.dp))
 
         Button(
-            onClick = onLogout,
+            onClick = { /* TODO: logout */ },
             colors = ButtonDefaults.buttonColors(containerColor = Color.Red),
             modifier = Modifier.fillMaxWidth(),
             shape = MaterialTheme.shapes.medium
