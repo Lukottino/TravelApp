@@ -1,41 +1,32 @@
 package com.example.travelapp
 
 import RegisterScreen
-import android.content.Context
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.example.travelapp.data.UserPreferences
+import androidx.navigation.compose.*
 import com.example.travelapp.viewmodel.AppViewModel
-import com.example.travelapp.viewmodel.AppViewModelFactory
 
 @Composable
 fun TravelApp(viewModel: AppViewModel) {
-    val context = LocalContext.current
-    val loggedUserId by UserPreferences.getUserId(context).collectAsState(initial = null)
     val navController = rememberNavController()
+    val currentUser by viewModel.currentUser.collectAsState()
 
-    val startDestination = if (loggedUserId != null) "home" else "login"
-
-    // Determina se mostrare la BottomBar
-    val showBottomBar = loggedUserId != null
+    // Controlla la route corrente per decidere se mostrare la BottomBar
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val showBottomBar = currentRoute != "login" && currentRoute != "register"
 
     Scaffold(
         bottomBar = { if (showBottomBar) BottomBar(navController) }
-    ) { innerPadding ->
+    ) { padding ->
         NavHost(
             navController = navController,
-            startDestination = startDestination,
-            modifier = Modifier.padding(innerPadding)
+            startDestination = if (currentUser != null) "home" else "login",
+            modifier = Modifier.padding(padding)
         ) {
+            // Login
             composable("login") {
                 LoginScreen(
                     viewModel,
@@ -47,6 +38,8 @@ fun TravelApp(viewModel: AppViewModel) {
                     onNavigateToRegister = { navController.navigate("register") }
                 )
             }
+
+            // Register
             composable("register") {
                 RegisterScreen(
                     viewModel,
@@ -57,15 +50,25 @@ fun TravelApp(viewModel: AppViewModel) {
                     }
                 )
             }
+
+            // Home / Tabs
             composable("home") { HomeScreen(viewModel) }
             composable("trips") { TripsScreen(viewModel) }
-            composable("add") { AddTripScreen(viewModel) }
+            composable("add") {
+                AddTripScreen(viewModel) {
+                    navController.navigate("trips") {
+                        popUpTo("add") { inclusive = true }
+                    }
+                }
+            }
             composable("map") { MapScreen(viewModel) }
+
+            // Profile
             composable("profile") {
                 ProfileScreen(viewModel) {
-                    // Logout callback
+                    viewModel.clearCurrentUser()
                     navController.navigate("login") {
-                        popUpTo("home") { inclusive = true }
+                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
                     }
                 }
             }

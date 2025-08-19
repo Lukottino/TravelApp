@@ -17,53 +17,43 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun RegisterScreen(viewModel: AppViewModel, onRegisterSuccess: () -> Unit) {
+fun RegisterScreen(
+    viewModel: AppViewModel,
+    onRegisterSuccess: () -> Unit
+) {
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val context = LocalContext.current
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center
     ) {
-        Text("Registrazione", fontSize = 32.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(24.dp))
-
-        OutlinedTextField(value = name, onValueChange = { name = it }, label = { Text("Nome") })
-        Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
-        Spacer(modifier = Modifier.height(12.dp))
-        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") })
-        Spacer(modifier = Modifier.height(24.dp))
+        TextField(value = name, onValueChange = { name = it }, label = { Text("Nome") })
+        Spacer(modifier = Modifier.height(8.dp))
+        TextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
+        Spacer(modifier = Modifier.height(8.dp))
+        TextField(value = password, onValueChange = { password = it }, label = { Text("Password") })
+        Spacer(modifier = Modifier.height(16.dp))
 
         Button(onClick = {
-            Log.d("RegisterScreen", "Click Registrati: name=$name, email=$email, password=$password")
-
-            val newUser = User(id = 0, name = name, email = email, password = password)
-
-            try {
-                viewModel.registerUser(newUser) { addedUser ->
-                    Log.d("RegisterScreen", "Utente registrato: $addedUser")
-                    CoroutineScope(Dispatchers.IO).launch {
-                        try {
-                            Log.d("RegisterScreen", "Salvataggio ID su DataStore: ${addedUser.id}")
-                            UserPreferences.saveUserId(context, addedUser.id)
-                            withContext(Dispatchers.Main) {
-                                Log.d("RegisterScreen", "Chiamo onRegisterSuccess()")
-                                onRegisterSuccess()
-                            }
-                        } catch (e: Exception) {
-                            Log.e("RegisterScreen", "Errore salvataggio DataStore", e)
-                        }
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("RegisterScreen", "Errore registerUser", e)
-            }
-
-        }, modifier = Modifier.fillMaxWidth()) {
+            val user = User(name = name, email = email, password = password)
+            viewModel.registerUser(
+                user,
+                onSuccess = { onRegisterSuccess() },
+                onError = { msg -> errorMessage = msg }
+            )
+        }) {
             Text("Registrati")
+        }
+
+
+        errorMessage?.let { msg ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = msg, color = MaterialTheme.colorScheme.error)
         }
     }
 }

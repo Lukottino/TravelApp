@@ -20,4 +20,8 @@ interface TripDao {
 
     @Delete
     suspend fun deleteTrip(trip: Trip)
+
+    @Query("SELECT * FROM trips WHERE userId = :userId")
+    fun getTripsForUser(userId: Int): LiveData<List<Trip>>
+
 }

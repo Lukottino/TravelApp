@@ -17,8 +17,11 @@ import com.example.travelapp.data.dao.SettingsDao
 
 @Database(
     entities = [Trip::class, User::class, LocationLog::class, FavoritePlace::class, Settings::class],
-    version = 2
+    version = 1,
+    exportSchema = false
 )
+
+
 abstract class AppDatabase : RoomDatabase() {
     abstract fun tripDao(): TripDao
     abstract fun userDao(): UserDao
