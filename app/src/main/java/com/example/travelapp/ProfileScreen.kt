@@ -34,7 +34,8 @@ fun ProfileScreen(viewModel: AppViewModel) {
     val user = users.firstOrNull() ?: User(
         id = 0,
         name = "Mario Rossi",
-        email = "mario.rossi@example.com"
+        email = "mario.rossi@example.com",
+        password = "ciao123"
     )
 
     Column(

@@ -45,6 +45,8 @@ android {
 }
 
 dependencies {
+    implementation("androidx.datastore:datastore-preferences:1.1.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("androidx.room:room-runtime:2.6.1")
     implementation(libs.androidx.runtime.livedata)
     kapt("androidx.room:room-compiler:2.6.1")  // serve per generare codice

@@ -33,4 +33,18 @@ class AppViewModel(context: Context) : ViewModel() {
     fun addLocation(location: LocationLog) = viewModelScope.launch { repository.insertLocation(location) }
     fun addFavorite(favorite: FavoritePlace) = viewModelScope.launch { repository.insertFavorite(favorite) }
     fun saveSettings(settings: Settings) = viewModelScope.launch { repository.insertSettings(settings) }
+    fun login(email: String, password: String): User? {
+        val user = allUsers.value.firstOrNull { it.email == email && it.password == password }
+        return user
+    }
+    fun registerUser(user: User, onSuccess: (User) -> Unit) {
+        viewModelScope.launch {
+            val insertedId = repository.insertUser(user)
+            val addedUser = user.copy(id = insertedId.toInt())
+            onSuccess(addedUser)  // ora ID esiste sempre
+        }
+    }
+
+
+
 }

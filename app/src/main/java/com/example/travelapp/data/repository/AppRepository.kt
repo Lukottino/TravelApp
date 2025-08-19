@@ -21,7 +21,10 @@ class AppRepository(
 
     // Funzioni di inserimento
     suspend fun insertTrip(trip: Trip) = tripDao.insertTrip(trip)
-    suspend fun insertUser(user: User) = userDao.insertUser(user)
+    suspend fun insertUser(user: User): Long {
+        return userDao.insertUser(user)
+    }
+
     suspend fun insertLocation(location: LocationLog) = locationDao.insertLocation(location)
     suspend fun insertFavorite(favorite: FavoritePlace) = favoritePlaceDao.insertFavorite(favorite)
     suspend fun insertSettings(settings: Settings) = settingsDao.insertSettings(settings)
