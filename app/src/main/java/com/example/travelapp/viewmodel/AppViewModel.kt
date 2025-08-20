@@ -1,6 +1,8 @@
 package com.example.travelapp.viewmodel
 
 import android.content.Context
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.travelapp.data.database.AppDatabase
@@ -26,6 +28,15 @@ class AppViewModel(context: Context) : ViewModel() {
 
     val allTrips = repository.allTrips
     val allUsers = MutableStateFlow<List<User>>(emptyList())
+    init {
+        viewModelScope.launch {
+            repository.allUsers.observeForever { users ->
+                allUsers.value = users
+            }
+        }
+    }
+
+
     val allLocations = repository.allLocations
     val allFavorites = repository.allFavorites
     val settings = repository.settings
@@ -33,6 +44,38 @@ class AppViewModel(context: Context) : ViewModel() {
     // Utente loggato
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
+
+    fun getTripsForCurrentUser(): LiveData<List<Trip>> {
+        val user = _currentUser.value
+        return if (user != null) {
+            repository.getTripsForUser(user.id)
+        } else {
+            // Restituisce sempre una lista vuota come LiveData
+            MutableLiveData(emptyList())
+        }
+    }
+
+
+    fun addTripForCurrentUser(
+        name: String,
+        destination: String,
+        startDate: Long,
+        endDate: Long? = null,
+        notes: String? = null
+    ) {
+        val user = _currentUser.value ?: return
+        val trip = Trip(
+            userId = user.id,
+            name = name,
+            destination = destination,
+            startDate = startDate,
+            endDate = endDate,
+            notes = notes
+        )
+        viewModelScope.launch {
+            repository.insertTrip(trip)
+        }
+    }
 
     fun setCurrentUser(user: User) {
         _currentUser.value = user

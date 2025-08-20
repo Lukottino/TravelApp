@@ -14,18 +14,25 @@ class AppRepository(
 
     // LiveData per osservare i dati
     val allTrips: LiveData<List<Trip>> = tripDao.getAllTrips()
-    val allUsers: LiveData<List<User>> = userDao.getAllUsers()
-    val allLocations: LiveData<List<LocationLog>> = locationDao.getAllLocations()
-    val allFavorites: LiveData<List<FavoritePlace>> = favoritePlaceDao.getAllFavorites()
-    val settings: LiveData<Settings?> = settingsDao.getSettings()
 
-    // Funzioni di inserimento
+    // --- Trips ---
+    fun getTripsForUser(userId: Int): LiveData<List<Trip>> = tripDao.getTripsForUser(userId)
     suspend fun insertTrip(trip: Trip) = tripDao.insertTrip(trip)
-    suspend fun insertUser(user: User): Long {
-        return userDao.insertUser(user)
-    }
+    suspend fun deleteTrip(trip: Trip) = tripDao.deleteTrip(trip)
 
+    // --- Users ---
+    val allUsers: LiveData<List<User>> = userDao.getAllUsers()
+    suspend fun insertUser(user: User): Long = userDao.insertUser(user)
+
+    // --- Locations ---
+    val allLocations: LiveData<List<LocationLog>> = locationDao.getAllLocations()
     suspend fun insertLocation(location: LocationLog) = locationDao.insertLocation(location)
+
+    // --- Favorites ---
+    val allFavorites: LiveData<List<FavoritePlace>> = favoritePlaceDao.getAllFavorites()
     suspend fun insertFavorite(favorite: FavoritePlace) = favoritePlaceDao.insertFavorite(favorite)
+
+    // --- Settings ---
+    val settings: LiveData<Settings?> = settingsDao.getSettings()
     suspend fun insertSettings(settings: Settings) = settingsDao.insertSettings(settings)
 }

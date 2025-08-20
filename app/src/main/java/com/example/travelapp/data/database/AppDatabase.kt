@@ -39,7 +39,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "travel_database"
                 )
-                    .fallbackToDestructiveMigration()
+                    //.fallbackToDestructiveMigration() - Linea pressocchè inutile, ma la tengo giusto in caso.
                     .build()
                 INSTANCE = instance
                 instance
