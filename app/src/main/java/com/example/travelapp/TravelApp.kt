@@ -7,6 +7,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.*
 import com.example.travelapp.viewmodel.AppViewModel
+import androidx.navigation.NavController
 
 @Composable
 fun TravelApp(viewModel: AppViewModel) {
@@ -53,14 +54,16 @@ fun TravelApp(viewModel: AppViewModel) {
 
             // Home / Tabs
             composable("home") { HomeScreen(viewModel) }
-            composable("trips") { TripsScreen(viewModel) }
-            composable("add") {
+            composable("trips") { TripsScreen(viewModel = viewModel, navController = navController) }
+            composable("addTrip") {
                 AddTripScreen(viewModel) {
                     navController.navigate("trips") {
-                        popUpTo("add") { inclusive = true }
+                        popUpTo("addTrip") { inclusive = true }
                     }
                 }
             }
+
+
             composable("map") { MapScreen(viewModel) }
 
             // Profile
