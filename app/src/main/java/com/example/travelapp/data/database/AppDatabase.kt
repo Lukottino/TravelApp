@@ -17,7 +17,7 @@ import com.example.travelapp.data.dao.SettingsDao
 
 @Database(
     entities = [Trip::class, User::class, LocationLog::class, FavoritePlace::class, Settings::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 
@@ -39,7 +39,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "travel_database"
                 )
-                    //.fallbackToDestructiveMigration() - Linea pressocchè inutile, ma la tengo giusto in caso.
+                    //.fallbackToDestructiveMigration() // Linea pressocchè inutile, ma la tengo giusto in caso.
                     .build()
                 INSTANCE = instance
                 instance

@@ -1,9 +1,11 @@
 package com.example.travelapp
 
-import android.app.DatePickerDialog
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
@@ -14,7 +16,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.travelapp.data.model.Trip
 import com.example.travelapp.viewmodel.AppViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONArray
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -24,7 +31,10 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit) {
     val scope = rememberCoroutineScope()
 
     var name by remember { mutableStateOf("") }
-    var location by remember { mutableStateOf("") }
+    var cityQuery by remember { mutableStateOf("") }
+    var citySuggestions by remember { mutableStateOf(listOf<CitySuggestion>()) }
+    var selectedCity by remember { mutableStateOf<CitySuggestion?>(null) }
+
     var startDate by remember { mutableStateOf<Long?>(null) }
     var endDate by remember { mutableStateOf<Long?>(null) }
     var notes by remember { mutableStateOf("") }
@@ -49,15 +59,42 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(8.dp))
 
+        // Campo città con autocomplete
         OutlinedTextField(
-            value = location,
-            onValueChange = { location = it },
-            label = { Text("Luogo") },
+            value = selectedCity?.displayName ?: cityQuery,
+            onValueChange = {
+                cityQuery = it
+                selectedCity = null
+                if (it.isNotBlank()) {
+                    scope.launch {
+                        citySuggestions = geocodeCity(it)
+                    }
+                } else {
+                    citySuggestions = emptyList()
+                }
+            },
+            label = { Text("Città / Paese") },
             modifier = Modifier.fillMaxWidth()
         )
+
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            items(citySuggestions) { suggestion ->
+                Text(
+                    text = suggestion.displayName,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            selectedCity = suggestion
+                            cityQuery = suggestion.displayName
+                            citySuggestions = emptyList()
+                        }
+                        .padding(8.dp)
+                )
+            }
+        }
+
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Data inizio
         DatePickerField(
             label = "Data Inizio",
             date = startDate,
@@ -66,7 +103,6 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit) {
         )
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Data fine (opzionale)
         DatePickerField(
             label = "Data Fine (opzionale)",
             date = endDate,
@@ -85,15 +121,17 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit) {
 
         Button(
             onClick = {
-                if (name.isBlank() || location.isBlank() || startDate == null) {
-                    Toast.makeText(context, "Compila nome, luogo e data inizio", Toast.LENGTH_SHORT).show()
+                if (name.isBlank() || selectedCity == null || startDate == null) {
+                    Toast.makeText(context, "Compila nome, città e data inizio", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
 
                 val newTrip = Trip(
                     id = 0,
                     name = name,
-                    destination = location,
+                    destination = selectedCity!!.displayName,
+                    latitude = selectedCity!!.lat,
+                    longitude = selectedCity!!.lon,
                     startDate = startDate!!,
                     endDate = endDate,
                     notes = notes.ifBlank { null },
@@ -101,8 +139,13 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit) {
                 )
 
                 scope.launch {
-                    viewModel.addTrip(newTrip)
-                    onTripAdded()
+                    try {
+                        viewModel.addTrip(newTrip)
+                        Toast.makeText(context, "Viaggio aggiunto!", Toast.LENGTH_SHORT).show()
+                        onTripAdded()
+                    } catch (e: Exception) {
+                        Toast.makeText(context, "Errore durante il salvataggio", Toast.LENGTH_SHORT).show()
+                    }
                 }
             },
             modifier = Modifier.fillMaxWidth()
@@ -112,24 +155,32 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit) {
     }
 }
 
-@Composable
-fun DatePickerField(
-    label: String,
-    date: Long?,
-    dateFormat: SimpleDateFormat,
-    onDateSelected: (Long) -> Unit
-) {
-    val context = LocalContext.current
-    OutlinedTextField(
-        value = date?.let { dateFormat.format(Date(it)) } ?: "",
-        onValueChange = {},
-        readOnly = true,
-        label = { Text(label) },
-        modifier = Modifier.fillMaxWidth(),
-        trailingIcon = {
-            IconButton(onClick = { showDatePicker(context, onDateSelected) }) {
-                Icon(Icons.Default.DateRange, contentDescription = label)
-            }
+// Classe per suggerimenti città
+data class CitySuggestion(val displayName: String, val lat: Double, val lon: Double)
+
+// Funzione di geocoding Nominatim
+suspend fun geocodeCity(query: String): List<CitySuggestion> = withContext(Dispatchers.IO) {
+    try {
+        val url = "https://nominatim.openstreetmap.org/search?format=json&q=${query}"
+        val client = OkHttpClient()
+        val request = Request.Builder()
+            .url(url)
+            .header("User-Agent", "TravelApp")
+            .build()
+        val response = client.newCall(request).execute()
+        val json = response.body?.string() ?: return@withContext emptyList()
+        val array = JSONArray(json)
+        val suggestions = mutableListOf<CitySuggestion>()
+        for (i in 0 until array.length()) {
+            val obj = array.getJSONObject(i)
+            val name = obj.getString("display_name")
+            val lat = obj.getDouble("lat")
+            val lon = obj.getDouble("lon")
+            suggestions.add(CitySuggestion(name, lat, lon))
         }
-    )
+        suggestions
+    } catch (e: Exception) {
+        emptyList()
+    }
 }
+

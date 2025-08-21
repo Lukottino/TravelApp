@@ -13,8 +13,14 @@ import com.example.travelapp.data.model.Settings
 import com.example.travelapp.data.model.Trip
 import com.example.travelapp.data.repository.AppRepository
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.CoroutineScope
+
 
 class AppViewModel(context: Context) : ViewModel() {
     private val database = AppDatabase.getDatabase(context)
@@ -68,7 +74,9 @@ class AppViewModel(context: Context) : ViewModel() {
         destination: String,
         startDate: Long,
         endDate: Long? = null,
-        notes: String? = null
+        notes: String? = null,
+        latitude: Double?,
+        longitude: Double?
     ) {
         val user = _currentUser.value ?: return
         val trip = Trip(
@@ -77,12 +85,15 @@ class AppViewModel(context: Context) : ViewModel() {
             destination = destination,
             startDate = startDate,
             endDate = endDate,
-            notes = notes
+            notes = notes,
+            latitude = latitude,
+            longitude = longitude
         )
         viewModelScope.launch {
             repository.insertTrip(trip)
         }
     }
+
 
     fun setCurrentUser(user: User) {
         _currentUser.value = user
@@ -124,10 +135,4 @@ class AppViewModel(context: Context) : ViewModel() {
             }
         }
     }
-
-
-
-
-
-
 }
