@@ -5,6 +5,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import com.example.travelapp.data.model.LocationLog
 import com.example.travelapp.data.model.Trip
 import kotlinx.coroutines.flow.Flow
@@ -15,13 +16,19 @@ interface TripDao {
     @Query("SELECT * FROM trips")
     fun getAllTrips(): LiveData<List<Trip>>
 
+    @Query("SELECT * FROM trips WHERE userId = :userId")
+    fun getTripsForUser(userId: Int): LiveData<List<Trip>>
+
+    @Query("SELECT * FROM trips WHERE id = :tripId")
+    fun getTripById(tripId: Int): LiveData<Trip>
+
     @Insert
     suspend fun insertTrip(trip: Trip)
 
     @Delete
     suspend fun deleteTrip(trip: Trip)
 
-    @Query("SELECT * FROM trips WHERE userId = :userId")
-    fun getTripsForUser(userId: Int): LiveData<List<Trip>>
+    @Update
+    suspend fun updateTrip(trip: Trip)
 
 }

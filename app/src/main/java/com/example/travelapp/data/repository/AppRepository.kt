@@ -17,8 +17,10 @@ class AppRepository(
 
     // --- Trips ---
     fun getTripsForUser(userId: Int): LiveData<List<Trip>> = tripDao.getTripsForUser(userId)
+    fun getTripById(tripId: Int): LiveData<Trip> = tripDao.getTripById(tripId)
     suspend fun insertTrip(trip: Trip) = tripDao.insertTrip(trip)
     suspend fun deleteTrip(trip: Trip) = tripDao.deleteTrip(trip)
+    suspend fun updateTrip(trip: Trip) = tripDao.updateTrip(trip)
 
     // --- Users ---
     val allUsers: LiveData<List<User>> = userDao.getAllUsers()

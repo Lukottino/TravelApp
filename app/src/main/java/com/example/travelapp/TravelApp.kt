@@ -62,6 +62,12 @@ fun TravelApp(viewModel: AppViewModel) {
                     }
                 }
             }
+            composable("editTrip/{tripId}") { backStackEntry ->
+                val tripId = backStackEntry.arguments?.getString("tripId")?.toInt() ?: 0
+                EditTripScreen(viewModel, tripId) {
+                    navController.popBackStack()
+                }
+            }
 
 
             composable("map") { MapScreen(viewModel) }

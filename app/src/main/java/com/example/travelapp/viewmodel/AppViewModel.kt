@@ -55,6 +55,13 @@ class AppViewModel(context: Context) : ViewModel() {
         }
     }
 
+    fun updateTrip(trip: Trip) {
+        viewModelScope.launch {
+            repository.updateTrip(trip)
+        }
+    }
+
+    fun getTripById(tripId: Int): LiveData<Trip> = repository.getTripById(tripId)
 
     fun addTripForCurrentUser(
         name: String,
