@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,8 +25,9 @@ import okhttp3.Request
 import java.text.SimpleDateFormat
 import java.util.*
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit) {
+fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit, onBack: () -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -42,115 +43,126 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit) {
     val currentUserId = viewModel.currentUser.value?.id ?: 0
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text("Aggiungi Viaggio", style = MaterialTheme.typography.headlineMedium)
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = name,
-            onValueChange = { name = it },
-            label = { Text("Nome Viaggio") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Campo città con autocomplete
-        OutlinedTextField(
-            value = selectedCity?.displayName ?: cityQuery,
-            onValueChange = {
-                cityQuery = it
-                selectedCity = null
-                if (it.isNotBlank()) {
-                    scope.launch {
-                        citySuggestions = geocodeCity(it)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Aggiungi Viaggio") },
+                navigationIcon = {
+                    IconButton(onClick = { onBack() }) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
                     }
-                } else {
-                    citySuggestions = emptyList()
                 }
-            },
-            label = { Text("Città / Paese") },
-            modifier = Modifier.fillMaxWidth()
-        )
-
-        LazyColumn(modifier = Modifier.fillMaxWidth()) {
-            items(citySuggestions) { suggestion ->
-                Text(
-                    text = suggestion.displayName,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            selectedCity = suggestion
-                            cityQuery = suggestion.displayName
-                            citySuggestions = emptyList()
-                        }
-                        .padding(8.dp)
-                )
-            }
+            )
         }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        DatePickerField(
-            label = "Data Inizio",
-            date = startDate,
-            dateFormat = dateFormat,
-            onDateSelected = { startDate = it }
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        DatePickerField(
-            label = "Data Fine (opzionale)",
-            date = endDate,
-            dateFormat = dateFormat,
-            onDateSelected = { endDate = it }
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-
-        OutlinedTextField(
-            value = notes,
-            onValueChange = { notes = it },
-            label = { Text("Note") },
-            modifier = Modifier.fillMaxWidth()
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Button(
-            onClick = {
-                if (name.isBlank() || selectedCity == null || startDate == null) {
-                    Toast.makeText(context, "Compila nome, città e data inizio", Toast.LENGTH_SHORT).show()
-                    return@Button
-                }
-
-                val newTrip = Trip(
-                    id = 0,
-                    name = name,
-                    destination = selectedCity!!.displayName,
-                    latitude = selectedCity!!.lat,
-                    longitude = selectedCity!!.lon,
-                    startDate = startDate!!,
-                    endDate = endDate,
-                    notes = notes.ifBlank { null },
-                    userId = currentUserId
-                )
-
-                scope.launch {
-                    try {
-                        viewModel.addTrip(newTrip)
-                        Toast.makeText(context, "Viaggio aggiunto!", Toast.LENGTH_SHORT).show()
-                        onTripAdded()
-                    } catch (e: Exception) {
-                        Toast.makeText(context, "Errore durante il salvataggio", Toast.LENGTH_SHORT).show()
-                    }
-                }
-            },
-            modifier = Modifier.fillMaxWidth()
+    ) { padding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding)
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Salva Viaggio")
+            OutlinedTextField(
+                value = name,
+                onValueChange = { name = it },
+                label = { Text("Nome Viaggio") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Campo città con autocomplete
+            OutlinedTextField(
+                value = selectedCity?.displayName ?: cityQuery,
+                onValueChange = {
+                    cityQuery = it
+                    selectedCity = null
+                    if (it.isNotBlank()) {
+                        scope.launch {
+                            citySuggestions = geocodeCity(it)
+                        }
+                    } else {
+                        citySuggestions = emptyList()
+                    }
+                },
+                label = { Text("Città / Paese") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            LazyColumn(modifier = Modifier.fillMaxWidth()) {
+                items(citySuggestions) { suggestion ->
+                    Text(
+                        text = suggestion.displayName,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                selectedCity = suggestion
+                                cityQuery = suggestion.displayName
+                                citySuggestions = emptyList()
+                            }
+                            .padding(8.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            DatePickerField(
+                label = "Data Inizio",
+                date = startDate,
+                dateFormat = dateFormat,
+                onDateSelected = { startDate = it }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            DatePickerField(
+                label = "Data Fine (opzionale)",
+                date = endDate,
+                dateFormat = dateFormat,
+                onDateSelected = { endDate = it }
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = notes,
+                onValueChange = { notes = it },
+                label = { Text("Note") },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Button(
+                onClick = {
+                    if (name.isBlank() || selectedCity == null || startDate == null) {
+                        Toast.makeText(context, "Compila nome, città e data inizio", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+
+                    val newTrip = Trip(
+                        id = 0,
+                        name = name,
+                        destination = selectedCity!!.displayName,
+                        latitude = selectedCity!!.lat,
+                        longitude = selectedCity!!.lon,
+                        startDate = startDate!!,
+                        endDate = endDate,
+                        notes = notes.ifBlank { null },
+                        userId = currentUserId
+                    )
+
+                    scope.launch {
+                        try {
+                            viewModel.addTrip(newTrip)
+                            Toast.makeText(context, "Viaggio aggiunto!", Toast.LENGTH_SHORT).show()
+                            onTripAdded()
+                        } catch (e: Exception) {
+                            Toast.makeText(context, "Errore durante il salvataggio", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Salva Viaggio")
+            }
         }
     }
 }
@@ -183,4 +195,3 @@ suspend fun geocodeCity(query: String): List<CitySuggestion> = withContext(Dispa
         emptyList()
     }
 }
-

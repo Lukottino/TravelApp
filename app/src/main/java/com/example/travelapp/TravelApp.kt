@@ -56,17 +56,21 @@ fun TravelApp(viewModel: AppViewModel) {
             composable("home") { HomeScreen(viewModel) }
             composable("trips") { TripsScreen(viewModel = viewModel, navController = navController) }
             composable("addTrip") {
-                AddTripScreen(viewModel) {
-                    navController.navigate("trips") {
-                        popUpTo("addTrip") { inclusive = true }
-                    }
-                }
+                AddTripScreen(
+                    viewModel = viewModel,
+                    onTripAdded = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() }
+                )
             }
+
             composable("editTrip/{tripId}") { backStackEntry ->
                 val tripId = backStackEntry.arguments?.getString("tripId")?.toInt() ?: 0
-                EditTripScreen(viewModel, tripId) {
-                    navController.popBackStack()
-                }
+                EditTripScreen(
+                    viewModel = viewModel,
+                    tripId = tripId,
+                    onTripUpdated = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() }
+                )
             }
 
 
