@@ -7,23 +7,25 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "location_logs",
+    tableName = "notifications",
     foreignKeys = [
         ForeignKey(
-            entity = Trip::class,
+            entity = User::class,
             parentColumns = ["id"],
-            childColumns = ["tripId"],
+            childColumns = ["userId"],
             onDelete = CASCADE
         )
     ],
-    indices = [Index("tripId")]
+    indices = [Index("userId")]
 )
-data class LocationLog(
+data class AppNotification(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
 
-    val tripId: Int,
-    val latitude: Double,
-    val longitude: Double,
-    val timestamp: Long
+    val userId: Int,
+    val type: String,
+    val relatedId: Int?, // tripId o requestId
+    val message: String,
+    val isRead: Boolean = false,
+    val createdAt: Long = System.currentTimeMillis()
 )

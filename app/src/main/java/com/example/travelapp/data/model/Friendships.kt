@@ -4,26 +4,27 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.ForeignKey.Companion.CASCADE
 import androidx.room.Index
-import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "favorite_place",
+    tableName = "friendships",
+    primaryKeys = ["userId", "friendId"],
     foreignKeys = [
         ForeignKey(
             entity = User::class,
             parentColumns = ["id"],
             childColumns = ["userId"],
             onDelete = CASCADE
+        ),
+        ForeignKey(
+            entity = User::class,
+            parentColumns = ["id"],
+            childColumns = ["friendId"],
+            onDelete = CASCADE
         )
     ],
-    indices = [Index("userId")]
+    indices = [Index("userId"), Index("friendId")]
 )
-data class FavoritePlace(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-
+data class Friendship(
     val userId: Int,
-    val name: String,
-    val latitude: Double,
-    val longitude: Double
+    val friendId: Int
 )

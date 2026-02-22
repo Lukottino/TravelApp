@@ -13,22 +13,34 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface TripDao {
 
-    @Query("SELECT * FROM trips")
-    fun getAllTrips(): LiveData<List<Trip>>
-
-    @Query("SELECT * FROM trips WHERE userId = :userId")
-    fun getTripsForUser(userId: Int): LiveData<List<Trip>>
-
-    @Query("SELECT * FROM trips WHERE id = :tripId")
-    fun getTripById(tripId: Int): LiveData<Trip>
-
     @Insert
-    suspend fun insertTrip(trip: Trip)
-
-    @Delete
-    suspend fun deleteTrip(trip: Trip)
+    suspend fun insert(trip: Trip): Long
 
     @Update
-    suspend fun updateTrip(trip: Trip)
+    suspend fun update(trip: Trip)
 
+    @Delete
+    suspend fun delete(trip: Trip)
+
+    @Query("SELECT * FROM trips WHERE id = :tripId")
+    fun getById(tripId: Int): Flow<Trip?>
+
+    @Query("""
+        SELECT t.* FROM trips t
+        INNER JOIN trip_participants tp ON t.id = tp.tripId
+        WHERE tp.userId = :userId
+        ORDER BY t.startDate DESC
+    """)
+    fun getTripsForUser(userId: Int): Flow<List<Trip>>
+
+    @Query("""
+    SELECT DISTINCT t.* FROM trips t
+    INNER JOIN trip_participants tp ON t.id = tp.tripId
+    WHERE tp.userId IN (
+        SELECT friendId FROM friendships WHERE userId = :userId
+    )
+    OR tp.userId = :userId
+    ORDER BY t.startDate DESC
+""")
+    fun getFeed(userId: Int): Flow<List<Trip>>
 }

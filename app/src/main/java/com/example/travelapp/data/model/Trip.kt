@@ -3,15 +3,21 @@ package com.example.travelapp.data.model
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity(tableName = "trips")
+@Entity(
+    tableName = "trips"
+)
 data class Trip(
-    @PrimaryKey(autoGenerate = true) val id: Int = 0,
-    val name: String,
-    val destination: String,
+    @PrimaryKey(autoGenerate = true)
+    val id: Int = 0,
+
+    val title: String,
+    val description: String?,
+    val destinationName: String,
     val latitude: Double?,
     val longitude: Double?,
+
     val startDate: Long,
-    val endDate: Long? = null,
-    val notes: String? = null,
-    val userId: Int
+    val endDate: Long?,
+
+    val createdAt: Long = System.currentTimeMillis()
 )

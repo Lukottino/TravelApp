@@ -7,23 +7,23 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "location_logs",
+    tableName = "user_stats",
     foreignKeys = [
         ForeignKey(
-            entity = Trip::class,
+            entity = User::class,
             parentColumns = ["id"],
-            childColumns = ["tripId"],
+            childColumns = ["userId"],
             onDelete = CASCADE
         )
     ],
-    indices = [Index("tripId")]
+    indices = [Index("userId")]
 )
-data class LocationLog(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
+data class UserStats(
+    @PrimaryKey
+    val userId: Int,
 
-    val tripId: Int,
-    val latitude: Double,
-    val longitude: Double,
-    val timestamp: Long
+    val totalTrips: Int = 0,
+    val totalKm: Double = 0.0,
+    val points: Int = 0,
+    val level: Int = 1
 )

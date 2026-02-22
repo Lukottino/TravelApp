@@ -4,26 +4,28 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.ForeignKey.Companion.CASCADE
 import androidx.room.Index
-import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "favorite_place",
+    tableName = "user_badges",
+    primaryKeys = ["userId", "badgeId"],
     foreignKeys = [
         ForeignKey(
             entity = User::class,
             parentColumns = ["id"],
             childColumns = ["userId"],
             onDelete = CASCADE
+        ),
+        ForeignKey(
+            entity = Badge::class,
+            parentColumns = ["id"],
+            childColumns = ["badgeId"],
+            onDelete = CASCADE
         )
     ],
-    indices = [Index("userId")]
+    indices = [Index("userId"), Index("badgeId")]
 )
-data class FavoritePlace(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-
+data class UserBadge(
     val userId: Int,
-    val name: String,
-    val latitude: Double,
-    val longitude: Double
+    val badgeId: Int,
+    val earnedAt: Long = System.currentTimeMillis()
 )
