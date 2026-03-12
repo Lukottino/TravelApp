@@ -22,6 +22,7 @@ class AppRepository(
 
     // --- Users ---
     suspend fun insertUser(user: User): Long = userDao.insert(user)
+    suspend fun updateUser(user: User) = userDao.update(user)
     suspend fun getUserByEmail(email: String): User? = userDao.getByEmail(email)
 
     // --- Locations ---

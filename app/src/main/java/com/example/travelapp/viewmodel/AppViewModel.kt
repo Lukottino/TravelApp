@@ -49,6 +49,14 @@ class AppViewModel(context: Context) : ViewModel() {
 
     fun saveSettings(settings: Settings) = viewModelScope.launch { repository.insertSettings(settings) }
 
+    fun updateUser(user: User, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            repository.updateUser(user)
+            _currentUser.value = user
+            onSuccess()
+        }
+    }
+
     fun setCurrentUser(user: User) { _currentUser.value = user }
 
     fun clearCurrentUser() { _currentUser.value = null }
