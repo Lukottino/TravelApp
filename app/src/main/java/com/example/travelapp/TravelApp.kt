@@ -21,7 +21,7 @@ fun TravelApp(viewModel: AppViewModel) {
         currentRoute?.startsWith("editTrip/") == false
 
     Scaffold(
-        bottomBar = { if (showBottomBar) BottomBar(navController) }
+        bottomBar = { if (showBottomBar) BottomBar(navController, viewModel) }
     ) { padding ->
         NavHost(
             navController = navController,
@@ -87,14 +87,21 @@ fun TravelApp(viewModel: AppViewModel) {
 
             composable("map") { MapScreen(viewModel) }
 
+            composable("friends") {
+                FriendsScreen(viewModel = viewModel)
+            }
+
             // Profile
             composable("profile") {
-                ProfileScreen(viewModel) {
-                    viewModel.clearCurrentUser()
-                    navController.navigate("login") {
-                        popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                ProfileScreen(
+                    viewModel = viewModel,
+                    onLogout = {
+                        viewModel.clearCurrentUser()
+                        navController.navigate("login") {
+                            popUpTo(navController.graph.startDestinationId) { inclusive = true }
+                        }
                     }
-                }
+                )
             }
         }
     }

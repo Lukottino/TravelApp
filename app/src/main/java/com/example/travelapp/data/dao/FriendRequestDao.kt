@@ -33,4 +33,7 @@ interface FriendRequestDao {
         WHERE senderId = :userId
     """)
     fun getSentRequests(userId: Int): Flow<List<FriendRequest>>
+
+    @Query("SELECT COUNT(*) FROM friend_requests WHERE senderId = :senderId AND receiverId = :receiverId AND status = 'PENDING'")
+    suspend fun hasPendingRequest(senderId: Int, receiverId: Int): Int
 }

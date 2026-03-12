@@ -37,17 +37,22 @@ import java.io.File
 @Composable
 fun ProfileScreen(viewModel: AppViewModel, onLogout: () -> Unit) {
     val currentUser by viewModel.currentUser.collectAsState()
-    val user = currentUser ?: return
+    if (currentUser == null) return
 
     var editMode by remember { mutableStateOf(false) }
 
     if (editMode) {
         EditProfileContent(viewModel = viewModel, onDone = { editMode = false })
     } else {
-        ViewProfileContent(viewModel = viewModel, onEditClick = { editMode = true }, onLogout = onLogout)
+        ViewProfileContent(
+            viewModel = viewModel,
+            onEditClick = { editMode = true },
+            onLogout = onLogout
+        )
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ViewProfileContent(
     viewModel: AppViewModel,

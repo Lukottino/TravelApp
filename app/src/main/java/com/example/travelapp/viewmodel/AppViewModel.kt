@@ -8,8 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.travelapp.data.database.AppDatabase
 import com.example.travelapp.data.model.*
 import com.example.travelapp.data.repository.AppRepository
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class AppViewModel(context: Context) : ViewModel() {
@@ -19,7 +18,9 @@ class AppViewModel(context: Context) : ViewModel() {
         database.userDao(),
         database.locationDao(),
         database.favoritePlaceDao(),
-        database.settingsDao()
+        database.settingsDao(),
+        database.friendshipDao(),
+        database.friendRequestDao()
     )
 
     val allTrips: LiveData<List<Trip>> = repository.allTrips
@@ -30,35 +31,43 @@ class AppViewModel(context: Context) : ViewModel() {
     private val _currentUser = MutableStateFlow<User?>(null)
     val currentUser: StateFlow<User?> = _currentUser
 
+    // --- Friends ---
+    val friends: StateFlow<List<User>> = currentUser
+        .flatMapLatest { user ->
+            if (user != null) repository.getFriends(user.id) else flowOf(emptyList())
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val incomingRequests: StateFlow<List<FriendRequest>> = currentUser
+        .flatMapLatest { user ->
+            if (user != null) repository.getIncomingRequests(user.id) else flowOf(emptyList())
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    val sentRequests: StateFlow<List<FriendRequest>> = currentUser
+        .flatMapLatest { user ->
+            if (user != null) repository.getSentRequests(user.id) else flowOf(emptyList())
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
+
+    // --- Trips ---
     fun getTripsForCurrentUser(): LiveData<List<Trip>> {
         val user = _currentUser.value ?: return MutableLiveData(emptyList())
         return repository.getTripsForUser(user.id)
     }
 
     fun getTripById(tripId: Int): LiveData<Trip> = repository.getTripById(tripId)
-
     fun addTrip(trip: Trip) = viewModelScope.launch { repository.insertTrip(trip) }
-
     fun updateTrip(trip: Trip) = viewModelScope.launch { repository.updateTrip(trip) }
-
     fun deleteTrip(trip: Trip) = viewModelScope.launch { repository.deleteTrip(trip) }
 
+    // --- Misc ---
     fun addLocation(location: LocationLog) = viewModelScope.launch { repository.insertLocation(location) }
-
     fun addFavorite(favorite: FavoritePlace) = viewModelScope.launch { repository.insertFavorite(favorite) }
-
     fun saveSettings(settings: Settings) = viewModelScope.launch { repository.insertSettings(settings) }
 
-    fun updateUser(user: User, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
-        viewModelScope.launch {
-            repository.updateUser(user)
-            _currentUser.value = user
-            onSuccess()
-        }
-    }
-
+    // --- Auth ---
     fun setCurrentUser(user: User) { _currentUser.value = user }
-
     fun clearCurrentUser() { _currentUser.value = null }
 
     fun login(email: String, password: String, onSuccess: (User) -> Unit, onError: () -> Unit) {
@@ -85,5 +94,37 @@ class AppViewModel(context: Context) : ViewModel() {
                 onSuccess(addedUser)
             }
         }
+    }
+
+    fun updateUser(user: User, onSuccess: () -> Unit = {}, onError: (String) -> Unit = {}) {
+        viewModelScope.launch {
+            repository.updateUser(user)
+            _currentUser.value = user
+            onSuccess()
+        }
+    }
+
+    // --- Users ---
+    suspend fun getUserById(id: Int): User? = repository.getUserById(id)
+
+    fun searchUsers(query: String, onResult: (List<User>) -> Unit) {
+        val userId = _currentUser.value?.id ?: return
+        viewModelScope.launch {
+            onResult(repository.searchUsers(query, excludeId = userId))
+        }
+    }
+
+    // --- Friend requests ---
+    fun sendFriendRequest(receiverId: Int) {
+        val userId = _currentUser.value?.id ?: return
+        viewModelScope.launch { repository.sendFriendRequest(userId, receiverId) }
+    }
+
+    fun acceptFriendRequest(request: FriendRequest) {
+        viewModelScope.launch { repository.acceptFriendRequest(request) }
+    }
+
+    fun rejectFriendRequest(request: FriendRequest) {
+        viewModelScope.launch { repository.rejectFriendRequest(request) }
     }
 }

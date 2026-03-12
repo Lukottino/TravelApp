@@ -26,6 +26,12 @@ interface UserDao {
     @Query("SELECT * FROM users ORDER BY name ASC")
     fun getAll(): Flow<List<User>>
 
+    @Query("SELECT * FROM users WHERE id = :id LIMIT 1")
+    suspend fun getByIdSuspend(id: Int): User?
+
+    @Query("SELECT * FROM users WHERE (name LIKE '%' || :query || '%' OR email LIKE '%' || :query || '%') AND id != :excludeId LIMIT 20")
+    suspend fun searchUsers(query: String, excludeId: Int): List<User>
+
     @Update
     suspend fun update(user: User)
 
