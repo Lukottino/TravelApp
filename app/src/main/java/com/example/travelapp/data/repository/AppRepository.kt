@@ -12,10 +12,8 @@ class AppRepository(
     private val settingsDao: SettingsDao
 ) {
 
-    // LiveData per osservare i dati
-    val allTrips: LiveData<List<Trip>> = tripDao.getAllTrips()
-
     // --- Trips ---
+    val allTrips: LiveData<List<Trip>> = tripDao.getAllTrips()
     fun getTripsForUser(userId: Int): LiveData<List<Trip>> = tripDao.getTripsForUser(userId)
     fun getTripById(tripId: Int): LiveData<Trip> = tripDao.getTripById(tripId)
     suspend fun insertTrip(trip: Trip) = tripDao.insertTrip(trip)
@@ -23,8 +21,8 @@ class AppRepository(
     suspend fun updateTrip(trip: Trip) = tripDao.updateTrip(trip)
 
     // --- Users ---
-    val allUsers: LiveData<List<User>> = userDao.getAllUsers()
-    suspend fun insertUser(user: User): Long = userDao.insertUser(user)
+    suspend fun insertUser(user: User): Long = userDao.insert(user)
+    suspend fun getUserByEmail(email: String): User? = userDao.getByEmail(email)
 
     // --- Locations ---
     val allLocations: LiveData<List<LocationLog>> = locationDao.getAllLocations()

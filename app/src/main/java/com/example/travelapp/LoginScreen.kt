@@ -1,42 +1,60 @@
 package com.example.travelapp
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.travelapp.data.UserPreferences
 import com.example.travelapp.viewmodel.AppViewModel
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @Composable
 fun LoginScreen(viewModel: AppViewModel, onLoginSuccess: () -> Unit, onNavigateToRegister: () -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
 
-    Column {
-        OutlinedTextField(value = email, onValueChange = { email = it }, label = { Text("Email") })
-        OutlinedTextField(value = password, onValueChange = { password = it }, label = { Text("Password") })
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        OutlinedTextField(
+            value = email,
+            onValueChange = { email = it; errorMessage = null },
+            label = { Text("Email") },
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        OutlinedTextField(
+            value = password,
+            onValueChange = { password = it; errorMessage = null },
+            label = { Text("Password") },
+            visualTransformation = PasswordVisualTransformation(),
+            modifier = Modifier.fillMaxWidth()
+        )
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Button(onClick = {
-            val user = viewModel.allUsers.value.firstOrNull { it.email == email && it.password == password }
-            if (user != null) {
-                viewModel.setCurrentUser(user)
-                onLoginSuccess()
-            }
-        }) {
+        Button(
+            onClick = {
+                viewModel.login(
+                    email = email,
+                    password = password,
+                    onSuccess = { onLoginSuccess() },
+                    onError = { errorMessage = "Email o password errati" }
+                )
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Login")
+        }
+
+        errorMessage?.let { msg ->
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(text = msg, color = MaterialTheme.colorScheme.error)
         }
 
         TextButton(onClick = onNavigateToRegister) { Text("Registrati") }

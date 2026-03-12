@@ -38,8 +38,7 @@ fun TripsScreen(viewModel: AppViewModel, navController: NavController) {
             ) {
                 items(trips) { trip ->
                     TripItem(trip = trip, onClick = {
-                        // Naviga alla schermata di modifica passando l'id del viaggio
-                        navController.navigate("editTrip/${trip.id}")
+                        navController.navigate("tripDetail/${trip.id}")
                     })
                 }
             }

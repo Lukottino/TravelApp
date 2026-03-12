@@ -1,46 +1,35 @@
 package com.example.travelapp.data.dao
 
 import androidx.lifecycle.LiveData
-import androidx.room.Dao
-import androidx.room.Delete
-import androidx.room.Insert
-import androidx.room.Query
-import androidx.room.Update
-import com.example.travelapp.data.model.LocationLog
+import androidx.room.*
 import com.example.travelapp.data.model.Trip
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface TripDao {
 
     @Insert
-    suspend fun insert(trip: Trip): Long
+    suspend fun insertTrip(trip: Trip): Long
 
     @Update
-    suspend fun update(trip: Trip)
+    suspend fun updateTrip(trip: Trip)
 
     @Delete
-    suspend fun delete(trip: Trip)
+    suspend fun deleteTrip(trip: Trip)
+
+    @Query("SELECT * FROM trips ORDER BY startDate DESC")
+    fun getAllTrips(): LiveData<List<Trip>>
 
     @Query("SELECT * FROM trips WHERE id = :tripId")
-    fun getById(tripId: Int): Flow<Trip?>
+    fun getTripById(tripId: Int): LiveData<Trip>
+
+    @Query("SELECT * FROM trips WHERE userId = :userId ORDER BY startDate DESC")
+    fun getTripsForUser(userId: Int): LiveData<List<Trip>>
 
     @Query("""
-        SELECT t.* FROM trips t
-        INNER JOIN trip_participants tp ON t.id = tp.tripId
-        WHERE tp.userId = :userId
+        SELECT DISTINCT t.* FROM trips t
+        LEFT JOIN friendships f ON f.userId = :userId
+        WHERE t.userId = :userId OR t.userId = f.friendId
         ORDER BY t.startDate DESC
     """)
-    fun getTripsForUser(userId: Int): Flow<List<Trip>>
-
-    @Query("""
-    SELECT DISTINCT t.* FROM trips t
-    INNER JOIN trip_participants tp ON t.id = tp.tripId
-    WHERE tp.userId IN (
-        SELECT friendId FROM friendships WHERE userId = :userId
-    )
-    OR tp.userId = :userId
-    ORDER BY t.startDate DESC
-""")
-    fun getFeed(userId: Int): Flow<List<Trip>>
+    fun getFeed(userId: Int): LiveData<List<Trip>>
 }

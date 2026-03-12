@@ -6,7 +6,6 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
-import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -23,7 +22,6 @@ import org.osmdroid.tileprovider.tilesource.TileSourceFactory
 import org.osmdroid.util.GeoPoint
 import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.Marker
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.livedata.observeAsState
 
 @Composable
@@ -31,7 +29,6 @@ fun MapScreen(viewModel: AppViewModel) {
     val context = LocalContext.current
     var permissionGranted by remember { mutableStateOf(false) }
 
-    // Richiesta permessi
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
         onResult = { granted ->
@@ -52,141 +49,73 @@ fun MapScreen(viewModel: AppViewModel) {
     }
 }
 
-
-@Composable
-fun TrackableMapViewWithMarker(trips: List<Trip>) {
-    val context = LocalContext.current
-
-    LaunchedEffect(Unit) {
-        Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
-    }
-
-    val map = remember { MapView(context) }
-
-    AndroidView(
-        factory = { map },
-        modifier = Modifier.fillMaxSize()
-    ) { mapView ->
-        mapView.setTileSource(TileSourceFactory.MAPNIK)
-        mapView.setBuiltInZoomControls(true)
-        mapView.setMultiTouchControls(true)
-
-        // Marker viaggi
-        trips.forEach { trip ->
-            val tripMarker = Marker(mapView)
-            tripMarker.position = GeoPoint(trip.latitude!!, trip.longitude!!)
-            tripMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-            tripMarker.title = trip.name // o qualsiasi campo descrittivo
-            mapView.overlays.add(tripMarker)
-        }
-
-        val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-
-        if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
-
-            // Centra sulla posizione iniziale
-            val lastLocation: Location? = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-            lastLocation?.let {
-                val startPoint = GeoPoint(it.latitude, it.longitude)
-                mapView.controller.setZoom(15.0)
-                mapView.controller.setCenter(startPoint)
-
-                // Marker iniziale
-                val userMarker = Marker(mapView)
-                userMarker.position = startPoint
-                userMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                userMarker.title = "Tu sei qui"
-                mapView.overlays.add(userMarker)
-
-                // Listener per tracking in tempo reale
-                val locationListener = object : LocationListener {
-                    override fun onLocationChanged(location: Location) {
-                        val geoPoint = GeoPoint(location.latitude, location.longitude)
-                        mapView.controller.setCenter(geoPoint)
-                        userMarker.position = geoPoint
-                        mapView.invalidate() // aggiorna la mappa
-                    }
-                    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
-                    override fun onProviderEnabled(provider: String) {}
-                    override fun onProviderDisabled(provider: String) {}
-                }
-
-                locationManager.requestLocationUpdates(
-                    LocationManager.GPS_PROVIDER,
-                    2000L, // ogni 2 secondi
-                    2f,    // o ogni 2 metri
-                    locationListener
-                )
-            }
-        }
-    }
-}
-
 @Composable
 fun TrackableMapViewWithTrips(trips: List<Trip>) {
     val context = LocalContext.current
+    val map = remember { MapView(context) }
 
     LaunchedEffect(Unit) {
         Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
     }
 
-    val map = remember { MapView(context) }
-
-    AndroidView(
-        factory = { map },
-        modifier = Modifier.fillMaxSize()
-    ) { mapView ->
-        mapView.setTileSource(TileSourceFactory.MAPNIK)
-        mapView.setBuiltInZoomControls(true)
-        mapView.setMultiTouchControls(true)
-
-        // Centra sulla posizione iniziale
+    DisposableEffect(Unit) {
         val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        var locationListener: LocationListener? = null
+
         if (ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             val lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
             lastLocation?.let {
                 val startPoint = GeoPoint(it.latitude, it.longitude)
-                mapView.controller.setZoom(15.0)
-                mapView.controller.setCenter(startPoint)
+                map.controller.setZoom(15.0)
+                map.controller.setCenter(startPoint)
 
-                // Marker per la posizione dell'utente
-                val userMarker = Marker(mapView).apply {
+                val userMarker = Marker(map).apply {
                     position = startPoint
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                     title = "Tu sei qui"
                 }
-                mapView.overlays.add(userMarker)
+                map.overlays.add(userMarker)
 
-                // Listener per tracking in tempo reale
-                val locationListener = object : LocationListener {
+                locationListener = object : LocationListener {
                     override fun onLocationChanged(location: Location) {
                         val geoPoint = GeoPoint(location.latitude, location.longitude)
-                        mapView.controller.setCenter(geoPoint)
+                        map.controller.setCenter(geoPoint)
                         userMarker.position = geoPoint
-                        mapView.invalidate()
+                        map.invalidate()
                     }
-                    override fun onStatusChanged(provider: String?, status: Int, extras: Bundle?) {}
-                    override fun onProviderEnabled(provider: String) {}
-                    override fun onProviderDisabled(provider: String) {}
                 }
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000L, 2f, locationListener)
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 2000L, 2f, locationListener!!)
             }
         }
 
-        // Marker per i viaggi dell'utente
+        onDispose {
+            locationListener?.let { locationManager.removeUpdates(it) }
+            map.onDetach()
+        }
+    }
+
+    AndroidView(
+        factory = { map },
+        modifier = Modifier.fillMaxSize()
+    ) { mapView ->
+        mapView.setTileSource(TileSourceFactory.MAPNIK)
+        mapView.setBuiltInZoomControls(true)
+        mapView.setMultiTouchControls(true)
+
+        // Rimuovi i marker dei viaggi precedenti e riaggiungi quelli aggiornati
+        mapView.overlays.removeAll(
+            mapView.overlays.filterIsInstance<Marker>().filter { it.title != "Tu sei qui" }
+        )
         trips.forEach { trip ->
-            val lat = trip.latitude
-            val lon = trip.longitude
-            if (lat != null && lon != null) {
-                val tripMarker = Marker(mapView).apply {
-                    position = GeoPoint(lat, lon)
-                    setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    title = trip.name
-                }
-                mapView.overlays.add(tripMarker)
+            val lat = trip.latitude ?: return@forEach
+            val lon = trip.longitude ?: return@forEach
+            val tripMarker = Marker(mapView).apply {
+                position = GeoPoint(lat, lon)
+                setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
+                title = trip.name
             }
+            mapView.overlays.add(tripMarker)
         }
-
         mapView.invalidate()
     }
 }

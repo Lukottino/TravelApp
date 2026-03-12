@@ -1,6 +1,5 @@
 package com.example.travelapp
 
-import RegisterScreen
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,7 +16,9 @@ fun TravelApp(viewModel: AppViewModel) {
     // Controlla la route corrente per decidere se mostrare la BottomBar
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-    val showBottomBar = currentRoute != "login" && currentRoute != "register"
+    val showBottomBar = currentRoute !in listOf("login", "register", "addTrip") &&
+        currentRoute?.startsWith("tripDetail/") == false &&
+        currentRoute?.startsWith("editTrip/") == false
 
     Scaffold(
         bottomBar = { if (showBottomBar) BottomBar(navController) }
@@ -59,6 +60,16 @@ fun TravelApp(viewModel: AppViewModel) {
                 AddTripScreen(
                     viewModel = viewModel,
                     onTripAdded = { navController.popBackStack() },
+                    onBack = { navController.popBackStack() }
+                )
+            }
+
+            composable("tripDetail/{tripId}") { backStackEntry ->
+                val tripId = backStackEntry.arguments?.getString("tripId")?.toInt() ?: 0
+                TripDetailScreen(
+                    viewModel = viewModel,
+                    tripId = tripId,
+                    onEdit = { navController.navigate("editTrip/$tripId") },
                     onBack = { navController.popBackStack() }
                 )
             }

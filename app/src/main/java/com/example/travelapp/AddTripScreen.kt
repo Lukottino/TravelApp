@@ -17,6 +17,8 @@ import androidx.compose.ui.unit.dp
 import com.example.travelapp.data.model.Trip
 import com.example.travelapp.viewmodel.AppViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -35,6 +37,7 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit, onBack: () -
     var cityQuery by remember { mutableStateOf("") }
     var citySuggestions by remember { mutableStateOf(listOf<CitySuggestion>()) }
     var selectedCity by remember { mutableStateOf<CitySuggestion?>(null) }
+    var geocodeJob by remember { mutableStateOf<Job?>(null) }
 
     var startDate by remember { mutableStateOf<Long?>(null) }
     var endDate by remember { mutableStateOf<Long?>(null) }
@@ -76,8 +79,10 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit, onBack: () -
                 onValueChange = {
                     cityQuery = it
                     selectedCity = null
+                    geocodeJob?.cancel()
                     if (it.isNotBlank()) {
-                        scope.launch {
+                        geocodeJob = scope.launch {
+                            delay(500)
                             citySuggestions = geocodeCity(it)
                         }
                     } else {
@@ -132,30 +137,30 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit, onBack: () -
 
             Button(
                 onClick = {
-                    if (name.isBlank() || selectedCity == null || startDate == null) {
+                    val city = selectedCity
+                    val start = startDate
+                    if (name.isBlank() || city == null || start == null) {
                         Toast.makeText(context, "Compila nome, città e data inizio", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
-
-                    val newTrip = Trip(
-                        id = 0,
-                        name = name,
-                        destination = selectedCity!!.displayName,
-                        latitude = selectedCity!!.lat,
-                        longitude = selectedCity!!.lon,
-                        startDate = startDate!!,
-                        endDate = endDate,
-                        notes = notes.ifBlank { null },
-                        userId = currentUserId
-                    )
-
-                    scope.launch {
-                        try {
-                            viewModel.addTrip(newTrip)
-                            Toast.makeText(context, "Viaggio aggiunto!", Toast.LENGTH_SHORT).show()
-                            onTripAdded()
-                        } catch (e: Exception) {
-                            Toast.makeText(context, "Errore durante il salvataggio", Toast.LENGTH_SHORT).show()
+                    } else {
+                        val newTrip = Trip(
+                            id = 0,
+                            name = name,
+                            destination = city.displayName,
+                            latitude = city.lat,
+                            longitude = city.lon,
+                            startDate = start,
+                            endDate = endDate,
+                            notes = notes.ifBlank { null },
+                            userId = currentUserId
+                        )
+                        scope.launch {
+                            try {
+                                viewModel.addTrip(newTrip)
+                                Toast.makeText(context, "Viaggio aggiunto!", Toast.LENGTH_SHORT).show()
+                                onTripAdded()
+                            } catch (e: Exception) {
+                                Toast.makeText(context, "Errore durante il salvataggio", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
                 },

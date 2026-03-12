@@ -4,24 +4,27 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
-import com.example.travelapp.data.model.Trip
-import com.example.travelapp.data.model.User
-import com.example.travelapp.data.model.LocationLog
-import com.example.travelapp.data.model.FavoritePlace
-import com.example.travelapp.data.model.Settings
-import com.example.travelapp.data.dao.TripDao
-import com.example.travelapp.data.dao.UserDao
-import com.example.travelapp.data.dao.FavoritePlaceDao
-import com.example.travelapp.data.dao.LocationDao
-import com.example.travelapp.data.dao.SettingsDao
+import com.example.travelapp.data.dao.*
+import com.example.travelapp.data.model.*
 
 @Database(
-    entities = [Trip::class, User::class, LocationLog::class, FavoritePlace::class, Settings::class],
-    version = 2,
+    entities = [
+        Trip::class,
+        User::class,
+        LocationLog::class,
+        FavoritePlace::class,
+        Settings::class,
+        TripParticipant::class,
+        Friendship::class,
+        FriendRequest::class,
+        UserStats::class,
+        Badge::class,
+        UserBadge::class,
+        AppNotification::class
+    ],
+    version = 3,
     exportSchema = false
 )
-
-
 abstract class AppDatabase : RoomDatabase() {
     abstract fun tripDao(): TripDao
     abstract fun userDao(): UserDao
@@ -39,7 +42,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "travel_database"
                 )
-                    //.fallbackToDestructiveMigration() // Linea pressocchè inutile, ma la tengo giusto in caso.
+                    .fallbackToDestructiveMigration()
                     .build()
                 INSTANCE = instance
                 instance
