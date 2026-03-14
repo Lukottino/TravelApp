@@ -61,7 +61,7 @@ fun TripsScreen(viewModel: AppViewModel, navController: NavController) {
 fun TripItem(trip: Trip, onClick: () -> Unit) {
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
     val startDateStr = dateFormat.format(Date(trip.startDate))
-    val endDateStr = trip.endDate?.let { dateFormat.format(Date(it)) } ?: "In corso"
+    val dateRangeStr = trip.endDate?.let { "Dal $startDateStr al ${dateFormat.format(Date(it))}" } ?: "Dal $startDateStr"
 
     Card(
         modifier = Modifier
@@ -85,7 +85,7 @@ fun TripItem(trip: Trip, onClick: () -> Unit) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(text = "Destinazione: ${trip.destination}", style = MaterialTheme.typography.bodyMedium)
             Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Dal $startDateStr al $endDateStr", style = MaterialTheme.typography.bodySmall)
+            Text(text = dateRangeStr, style = MaterialTheme.typography.bodySmall)
             if (!trip.notes.isNullOrBlank()) {
                 Spacer(modifier = Modifier.height(6.dp))
                 Text(text = "Note: ${trip.notes}", style = MaterialTheme.typography.bodySmall)
