@@ -21,7 +21,8 @@ class AppViewModel(context: Context) : ViewModel() {
         database.settingsDao(),
         database.friendshipDao(),
         database.friendRequestDao(),
-        database.tripParticipantDao()
+        database.tripParticipantDao(),
+        database.tripPhotoDao()
     )
 
     val allTrips: LiveData<List<Trip>> = repository.allTrips
@@ -65,6 +66,21 @@ class AppViewModel(context: Context) : ViewModel() {
     }
     fun updateTrip(trip: Trip) = viewModelScope.launch { repository.updateTrip(trip) }
     fun deleteTrip(trip: Trip) = viewModelScope.launch { repository.deleteTrip(trip) }
+
+    // --- Photos ---
+    fun getPhotosForTrip(tripId: Int): kotlinx.coroutines.flow.Flow<List<com.example.travelapp.data.model.TripPhoto>> =
+        repository.getPhotosForTrip(tripId)
+
+    fun addPhoto(tripId: Int, imageUri: String) {
+        val userId = _currentUser.value?.id ?: return
+        viewModelScope.launch {
+            repository.insertPhoto(com.example.travelapp.data.model.TripPhoto(tripId = tripId, addedBy = userId, imageUri = imageUri))
+        }
+    }
+
+    fun deletePhoto(photo: com.example.travelapp.data.model.TripPhoto) = viewModelScope.launch {
+        repository.deletePhoto(photo)
+    }
 
     // --- Participants ---
     fun getParticipants(tripId: Int): kotlinx.coroutines.flow.Flow<List<User>> = repository.getParticipants(tripId)

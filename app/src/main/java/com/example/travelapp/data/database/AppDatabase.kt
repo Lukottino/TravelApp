@@ -20,9 +20,10 @@ import com.example.travelapp.data.model.*
         UserStats::class,
         Badge::class,
         UserBadge::class,
-        AppNotification::class
+        AppNotification::class,
+        TripPhoto::class
     ],
-    version = 5,
+    version = 6,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -34,6 +35,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun friendshipDao(): FriendshipDao
     abstract fun friendRequestDao(): FriendRequestDao
     abstract fun tripParticipantDao(): TripParticipantDao
+    abstract fun tripPhotoDao(): TripPhotoDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null

@@ -13,7 +13,8 @@ class AppRepository(
     private val settingsDao: SettingsDao,
     private val friendshipDao: FriendshipDao,
     private val friendRequestDao: FriendRequestDao,
-    private val tripParticipantDao: TripParticipantDao
+    private val tripParticipantDao: TripParticipantDao,
+    private val tripPhotoDao: TripPhotoDao
 ) {
 
     // --- Trips ---
@@ -68,6 +69,11 @@ class AppRepository(
 
     suspend fun hasPendingRequest(senderId: Int, receiverId: Int): Boolean =
         friendRequestDao.hasPendingRequest(senderId, receiverId) > 0
+
+    // --- Photos ---
+    fun getPhotosForTrip(tripId: Int): Flow<List<TripPhoto>> = tripPhotoDao.getPhotosForTrip(tripId)
+    suspend fun insertPhoto(photo: TripPhoto) = tripPhotoDao.insert(photo)
+    suspend fun deletePhoto(photo: TripPhoto) = tripPhotoDao.delete(photo)
 
     // --- Participants ---
     fun getParticipants(tripId: Int): Flow<List<User>> = tripParticipantDao.getParticipants(tripId)
