@@ -12,12 +12,14 @@ class AppRepository(
     private val favoritePlaceDao: FavoritePlaceDao,
     private val settingsDao: SettingsDao,
     private val friendshipDao: FriendshipDao,
-    private val friendRequestDao: FriendRequestDao
+    private val friendRequestDao: FriendRequestDao,
+    private val tripParticipantDao: TripParticipantDao
 ) {
 
     // --- Trips ---
     val allTrips: LiveData<List<Trip>> = tripDao.getAllTrips()
     fun getTripsForUser(userId: Int): LiveData<List<Trip>> = tripDao.getTripsForUser(userId)
+    suspend fun getTripsForUserList(userId: Int): List<Trip> = tripDao.getTripsForUserSuspend(userId)
     fun getTripById(tripId: Int): LiveData<Trip> = tripDao.getTripById(tripId)
     suspend fun insertTrip(trip: Trip) = tripDao.insertTrip(trip)
     suspend fun deleteTrip(trip: Trip) = tripDao.deleteTrip(trip)
@@ -66,4 +68,9 @@ class AppRepository(
 
     suspend fun hasPendingRequest(senderId: Int, receiverId: Int): Boolean =
         friendRequestDao.hasPendingRequest(senderId, receiverId) > 0
+
+    // --- Participants ---
+    fun getParticipants(tripId: Int): Flow<List<User>> = tripParticipantDao.getParticipants(tripId)
+    suspend fun insertParticipant(participant: TripParticipant) = tripParticipantDao.insert(participant)
+    suspend fun removeParticipant(tripId: Int, userId: Int) = tripParticipantDao.removeParticipant(tripId, userId)
 }

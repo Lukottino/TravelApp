@@ -17,7 +17,7 @@ fun BottomBar(navController: NavController, viewModel: AppViewModel) {
         BottomNavItem("home", Icons.Default.Home),
         BottomNavItem("trips", Icons.Default.List),
         BottomNavItem("map", Icons.Default.Place),
-        BottomNavItem("friends", Icons.Default.Search),
+        BottomNavItem("friends", Icons.Default.Group),
         BottomNavItem("profile", Icons.Default.Person)
     )
 

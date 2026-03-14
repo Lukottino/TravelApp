@@ -1,20 +1,34 @@
 package com.example.travelapp
 
 import android.content.Context
+import android.content.Intent
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AddPhotoAlternate
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Folder
+import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
 import com.example.travelapp.data.model.Trip
+import com.example.travelapp.data.model.TripStatus
+import com.example.travelapp.data.model.computeTripStatus
 import com.example.travelapp.viewmodel.AppViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -42,6 +56,22 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit, onBack: () -
     var startDate by remember { mutableStateOf<Long?>(null) }
     var endDate by remember { mutableStateOf<Long?>(null) }
     var notes by remember { mutableStateOf("") }
+    var coverImageUri by remember { mutableStateOf<String?>(null) }
+    var showDraftDialog by remember { mutableStateOf(false) }
+    var showImagePicker by remember { mutableStateOf(false) }
+
+    val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+        uri?.let {
+            context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            coverImageUri = it.toString()
+        }
+    }
+    val fileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        uri?.let {
+            context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            coverImageUri = it.toString()
+        }
+    }
 
     val currentUserId = viewModel.currentUser.value?.id ?: 0
     val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
@@ -51,13 +81,47 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit, onBack: () -
             TopAppBar(
                 title = { Text("Aggiungi Viaggio") },
                 navigationIcon = {
-                    IconButton(onClick = { onBack() }) {
+                    IconButton(onClick = {
+                        if (name.isNotBlank()) showDraftDialog = true else onBack()
+                    }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Indietro")
                     }
                 }
             )
         }
     ) { padding ->
+
+        if (showDraftDialog) {
+            AlertDialog(
+                onDismissRequest = { showDraftDialog = false },
+                title = { Text("Salva come bozza?") },
+                text = { Text("Vuoi salvare il viaggio come bozza?") },
+                confirmButton = {
+                    TextButton(onClick = {
+                        showDraftDialog = false
+                        val city = selectedCity
+                        val start = startDate ?: System.currentTimeMillis()
+                        val draft = Trip(
+                            name = name.ifBlank { "Bozza" },
+                            destination = city?.displayName ?: "",
+                            latitude = city?.lat,
+                            longitude = city?.lon,
+                            startDate = start,
+                            endDate = endDate,
+                            notes = notes.ifBlank { null },
+                            userId = currentUserId,
+                            coverImageUri = coverImageUri,
+                            status = TripStatus.DRAFT
+                        )
+                        scope.launch { viewModel.addTrip(draft); onBack() }
+                    }) { Text("Salva bozza") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showDraftDialog = false; onBack() }) { Text("Scarta") }
+                }
+            )
+        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -133,6 +197,56 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit, onBack: () -
                 label = { Text("Note") },
                 modifier = Modifier.fillMaxWidth()
             )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Immagine copertina
+            if (showImagePicker) {
+                ModalBottomSheet(onDismissRequest = { showImagePicker = false }) {
+                    Column(modifier = Modifier.padding(bottom = 32.dp)) {
+                        ListItem(
+                            headlineContent = { Text("Scegli dalla galleria") },
+                            leadingContent = { Icon(Icons.Default.Photo, contentDescription = null) },
+                            modifier = Modifier.clickable {
+                                showImagePicker = false
+                                galleryLauncher.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+                            }
+                        )
+                        ListItem(
+                            headlineContent = { Text("Scegli dai file") },
+                            leadingContent = { Icon(Icons.Default.Folder, contentDescription = null) },
+                            modifier = Modifier.clickable {
+                                showImagePicker = false
+                                fileLauncher.launch(arrayOf("image/*"))
+                            }
+                        )
+                    }
+                }
+            }
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(160.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+                    .clickable { showImagePicker = true },
+                contentAlignment = Alignment.Center
+            ) {
+                if (coverImageUri != null) {
+                    AsyncImage(
+                        model = coverImageUri,
+                        contentDescription = "Copertina",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
+                    )
+                } else {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text("Aggiungi copertina", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
@@ -151,7 +265,9 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit, onBack: () -
                             startDate = start,
                             endDate = endDate,
                             notes = notes.ifBlank { null },
-                            userId = currentUserId
+                            userId = currentUserId,
+                            coverImageUri = coverImageUri,
+                            status = computeTripStatus(endDate)
                         )
                         scope.launch {
                             try {

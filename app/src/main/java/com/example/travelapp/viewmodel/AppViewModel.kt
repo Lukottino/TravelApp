@@ -20,7 +20,8 @@ class AppViewModel(context: Context) : ViewModel() {
         database.favoritePlaceDao(),
         database.settingsDao(),
         database.friendshipDao(),
-        database.friendRequestDao()
+        database.friendRequestDao(),
+        database.tripParticipantDao()
     )
 
     val allTrips: LiveData<List<Trip>> = repository.allTrips
@@ -57,9 +58,22 @@ class AppViewModel(context: Context) : ViewModel() {
     }
 
     fun getTripById(tripId: Int): LiveData<Trip> = repository.getTripById(tripId)
-    fun addTrip(trip: Trip) = viewModelScope.launch { repository.insertTrip(trip) }
+    fun addTrip(trip: Trip) = viewModelScope.launch {
+        val tripId = repository.insertTrip(trip)
+        val userId = _currentUser.value?.id ?: return@launch
+        repository.insertParticipant(TripParticipant(tripId.toInt(), userId, TripRole.OWNER))
+    }
     fun updateTrip(trip: Trip) = viewModelScope.launch { repository.updateTrip(trip) }
     fun deleteTrip(trip: Trip) = viewModelScope.launch { repository.deleteTrip(trip) }
+
+    // --- Participants ---
+    fun getParticipants(tripId: Int): kotlinx.coroutines.flow.Flow<List<User>> = repository.getParticipants(tripId)
+    fun addParticipant(tripId: Int, userId: Int) = viewModelScope.launch {
+        repository.insertParticipant(TripParticipant(tripId, userId, TripRole.MEMBER))
+    }
+    fun removeParticipant(tripId: Int, userId: Int) = viewModelScope.launch {
+        repository.removeParticipant(tripId, userId)
+    }
 
     // --- Misc ---
     fun addLocation(location: LocationLog) = viewModelScope.launch { repository.insertLocation(location) }
@@ -106,6 +120,7 @@ class AppViewModel(context: Context) : ViewModel() {
 
     // --- Users ---
     suspend fun getUserById(id: Int): User? = repository.getUserById(id)
+    suspend fun getTripsForUser(userId: Int): List<Trip> = repository.getTripsForUserList(userId)
 
     fun searchUsers(query: String, onResult: (List<User>) -> Unit) {
         val userId = _currentUser.value?.id ?: return

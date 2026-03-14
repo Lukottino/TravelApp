@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
+import androidx.navigation.NavController
 import com.example.travelapp.data.model.Trip
 import com.example.travelapp.viewmodel.AppViewModel
 import org.osmdroid.config.Configuration
@@ -25,9 +26,14 @@ import org.osmdroid.views.overlay.Marker
 import androidx.compose.runtime.livedata.observeAsState
 
 @Composable
-fun MapScreen(viewModel: AppViewModel) {
+fun MapScreen(viewModel: AppViewModel, navController: NavController) {
     val context = LocalContext.current
-    var permissionGranted by remember { mutableStateOf(false) }
+    var permissionGranted by remember {
+        mutableStateOf(
+            ActivityCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION)
+                    == PackageManager.PERMISSION_GRANTED
+        )
+    }
 
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission(),
@@ -40,22 +46,38 @@ fun MapScreen(viewModel: AppViewModel) {
     )
 
     LaunchedEffect(Unit) {
-        launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        if (!permissionGranted) {
+            launcher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
     }
 
-    if (permissionGranted) {
-        val trips by viewModel.getTripsForCurrentUser().observeAsState(emptyList())
-        TrackableMapViewWithTrips(trips)
-    }
+    val trips by viewModel.getTripsForCurrentUser().observeAsState(emptyList())
+    TrackableMapViewWithTrips(trips, navController)
 }
 
 @Composable
-fun TrackableMapViewWithTrips(trips: List<Trip>) {
+fun TrackableMapViewWithTrips(trips: List<Trip>, navController: NavController) {
     val context = LocalContext.current
-    val map = remember { MapView(context) }
 
-    LaunchedEffect(Unit) {
-        Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
+    Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
+
+    val map = remember {
+        MapView(context).apply {
+            setTileSource(TileSourceFactory.MAPNIK)
+            setBuiltInZoomControls(false)
+            setMultiTouchControls(true)
+            isHorizontalMapRepetitionEnabled = false
+            isVerticalMapRepetitionEnabled = false
+            minZoomLevel = 4.0
+            controller.setZoom(5.0)
+            setScrollableAreaLimitLatitude(80.0, -80.0, 0)
+            setScrollableAreaLimitLongitude(
+                MapView.getTileSystem().minLongitude,
+                MapView.getTileSystem().maxLongitude,
+                0
+            )
+            controller.setCenter(GeoPoint(41.9028, 12.4964)) // Italia come default
+        }
     }
 
     DisposableEffect(Unit) {
@@ -98,10 +120,6 @@ fun TrackableMapViewWithTrips(trips: List<Trip>) {
         factory = { map },
         modifier = Modifier.fillMaxSize()
     ) { mapView ->
-        mapView.setTileSource(TileSourceFactory.MAPNIK)
-        mapView.setBuiltInZoomControls(true)
-        mapView.setMultiTouchControls(true)
-
         // Rimuovi i marker dei viaggi precedenti e riaggiungi quelli aggiornati
         mapView.overlays.removeAll(
             mapView.overlays.filterIsInstance<Marker>().filter { it.title != "Tu sei qui" }
@@ -113,6 +131,10 @@ fun TrackableMapViewWithTrips(trips: List<Trip>) {
                 position = GeoPoint(lat, lon)
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 title = trip.name
+                setOnMarkerClickListener { _, _ ->
+                    navController.navigate("tripDetail/${trip.id}")
+                    true
+                }
             }
             mapView.overlays.add(tripMarker)
         }

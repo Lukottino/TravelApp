@@ -2,17 +2,20 @@ package com.example.travelapp
 
 import android.Manifest
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.core.content.ContextCompat
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -20,6 +23,7 @@ import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Photo
+import androidx.compose.material.icons.filled.FlightTakeoff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,13 +33,15 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.livedata.observeAsState
+import com.example.travelapp.data.model.Trip
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.example.travelapp.viewmodel.AppViewModel
 import java.io.File
 
 @Composable
-fun ProfileScreen(viewModel: AppViewModel, onLogout: () -> Unit) {
+fun ProfileScreen(viewModel: AppViewModel, onLogout: () -> Unit, onTripClick: (Int) -> Unit = {}) {
     val currentUser by viewModel.currentUser.collectAsState()
     if (currentUser == null) return
 
@@ -47,7 +53,8 @@ fun ProfileScreen(viewModel: AppViewModel, onLogout: () -> Unit) {
         ViewProfileContent(
             viewModel = viewModel,
             onEditClick = { editMode = true },
-            onLogout = onLogout
+            onLogout = onLogout,
+            onTripClick = onTripClick
         )
     }
 }
@@ -57,12 +64,17 @@ fun ProfileScreen(viewModel: AppViewModel, onLogout: () -> Unit) {
 private fun ViewProfileContent(
     viewModel: AppViewModel,
     onEditClick: () -> Unit,
-    onLogout: () -> Unit
+    onLogout: () -> Unit,
+    onTripClick: (Int) -> Unit
 ) {
     val user by viewModel.currentUser.collectAsState()
+    val trips by viewModel.getTripsForCurrentUser().observeAsState(emptyList())
 
     Column(
-        modifier = Modifier.fillMaxSize().padding(24.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Spacer(modifier = Modifier.height(24.dp))
@@ -71,15 +83,29 @@ private fun ViewProfileContent(
         Text(text = user?.name ?: "", style = MaterialTheme.typography.headlineSmall)
         Spacer(modifier = Modifier.height(4.dp))
         Text(text = user?.email ?: "", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(modifier = Modifier.height(32.dp))
+        Spacer(modifier = Modifier.height(24.dp))
         OutlinedButton(onClick = onEditClick, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(modifier = Modifier.width(8.dp))
             Text("Modifica profilo")
         }
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
         TextButton(onClick = onLogout) {
             Text("Logout", color = MaterialTheme.colorScheme.error)
+        }
+
+        if (trips.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                "I miei viaggi (${trips.size})",
+                style = MaterialTheme.typography.titleSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.align(Alignment.Start)
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            TripGrid(trips = trips, onTripClick = onTripClick)
         }
     }
 }
@@ -128,11 +154,21 @@ private fun EditProfileContent(
 
     val galleryLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.PickVisualMedia()
-    ) { uri -> uri?.let { photoUri = it.toString() } }
+    ) { uri ->
+        uri?.let {
+            context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            photoUri = it.toString()
+        }
+    }
 
     val fileLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
-    ) { uri -> uri?.let { photoUri = it.toString() } }
+    ) { uri ->
+        uri?.let {
+            context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            photoUri = it.toString()
+        }
+    }
 
     if (showPhotoPicker) {
         ModalBottomSheet(onDismissRequest = { showPhotoPicker = false }) {
@@ -295,6 +331,70 @@ private fun createCameraUri(context: Context): Uri {
     val dir = File(context.cacheDir, "images").also { it.mkdirs() }
     val file = File(dir, "photo_${System.currentTimeMillis()}.jpg")
     return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+}
+
+@Composable
+fun TripGrid(trips: List<Trip>, onTripClick: (Int) -> Unit) {
+    val rows = trips.chunked(3)
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        rows.forEach { row ->
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                row.forEach { trip ->
+                    TripGridItem(trip = trip, modifier = Modifier.weight(1f), onClick = { onTripClick(trip.id) })
+                }
+                repeat(3 - row.size) {
+                    Spacer(modifier = Modifier.weight(1f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TripGridItem(trip: Trip, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(
+        modifier = modifier
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(8.dp))
+            .clickable { onClick() },
+        contentAlignment = Alignment.BottomStart
+    ) {
+        if (trip.coverImageUri != null) {
+            AsyncImage(
+                model = trip.coverImageUri,
+                contentDescription = trip.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(androidx.compose.ui.graphics.Color.Black.copy(alpha = 0.3f))
+            )
+        } else {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.FlightTakeoff,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+        }
+        Text(
+            text = trip.name,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (trip.coverImageUri != null) androidx.compose.ui.graphics.Color.White
+                    else MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(6.dp),
+            maxLines = 2
+        )
+    }
 }
 
 @Composable

@@ -85,7 +85,7 @@ fun TravelApp(viewModel: AppViewModel) {
             }
 
 
-            composable("map") { MapScreen(viewModel) }
+            composable("map") { MapScreen(viewModel, navController) }
 
             composable("friends") {
                 FriendsScreen(viewModel = viewModel)
@@ -100,7 +100,8 @@ fun TravelApp(viewModel: AppViewModel) {
                         navController.navigate("login") {
                             popUpTo(navController.graph.startDestinationId) { inclusive = true }
                         }
-                    }
+                    },
+                    onTripClick = { tripId -> navController.navigate("tripDetail/$tripId") }
                 )
             }
         }

@@ -30,4 +30,7 @@ interface TripParticipantDao {
         LIMIT 1
     """)
     suspend fun getOwner(tripId: Int): TripParticipant?
+
+    @Query("DELETE FROM trip_participants WHERE tripId = :tripId AND userId = :userId")
+    suspend fun removeParticipant(tripId: Int, userId: Int)
 }

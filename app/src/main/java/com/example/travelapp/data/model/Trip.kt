@@ -32,5 +32,9 @@ data class Trip(
     val startDate: Long,
     val endDate: Long?,
 
-    val createdAt: Long = System.currentTimeMillis()
+    val createdAt: Long = System.currentTimeMillis(),
+
+    val coverImageUri: String? = null,
+
+    val status: TripStatus = TripStatus.DRAFT
 )

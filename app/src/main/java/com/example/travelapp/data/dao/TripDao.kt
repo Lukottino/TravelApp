@@ -22,8 +22,21 @@ interface TripDao {
     @Query("SELECT * FROM trips WHERE id = :tripId")
     fun getTripById(tripId: Int): LiveData<Trip>
 
-    @Query("SELECT * FROM trips WHERE userId = :userId ORDER BY startDate DESC")
+    @Query("""
+        SELECT DISTINCT t.* FROM trips t
+        LEFT JOIN trip_participants tp ON tp.tripId = t.id
+        WHERE t.userId = :userId OR tp.userId = :userId
+        ORDER BY t.startDate DESC
+    """)
     fun getTripsForUser(userId: Int): LiveData<List<Trip>>
+
+    @Query("""
+        SELECT DISTINCT t.* FROM trips t
+        LEFT JOIN trip_participants tp ON tp.tripId = t.id
+        WHERE t.userId = :userId OR tp.userId = :userId
+        ORDER BY t.startDate DESC
+    """)
+    suspend fun getTripsForUserSuspend(userId: Int): List<Trip>
 
     @Query("""
         SELECT DISTINCT t.* FROM trips t
