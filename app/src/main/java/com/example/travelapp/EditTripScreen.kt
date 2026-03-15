@@ -229,7 +229,7 @@ fun EditTripScreen(viewModel: AppViewModel, tripId: Int, onTripUpdated: () -> Un
                         endDate = endDate,
                         notes = notes.ifBlank { null },
                         coverImageUri = coverImageUri,
-                        status = computeTripStatus(endDate)
+                        status = computeTripStatus(startDate, endDate)
                     )
                     scope.launch {
                         viewModel.updateTrip(updatedTrip)

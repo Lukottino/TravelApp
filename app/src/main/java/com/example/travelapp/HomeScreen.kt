@@ -81,11 +81,13 @@ fun FeedCard(trip: Trip, viewModel: AppViewModel, onClick: () -> Unit) {
 
     val statusContainerColor = when (trip.status) {
         TripStatus.DRAFT -> MaterialTheme.colorScheme.surfaceVariant
+        TripStatus.PLANNED -> MaterialTheme.colorScheme.secondaryContainer
         TripStatus.IN_PROGRESS -> MaterialTheme.colorScheme.primaryContainer
         TripStatus.COMPLETED -> MaterialTheme.colorScheme.tertiaryContainer
     }
     val statusContentColor = when (trip.status) {
         TripStatus.DRAFT -> MaterialTheme.colorScheme.onSurfaceVariant
+        TripStatus.PLANNED -> MaterialTheme.colorScheme.onSecondaryContainer
         TripStatus.IN_PROGRESS -> MaterialTheme.colorScheme.onPrimaryContainer
         TripStatus.COMPLETED -> MaterialTheme.colorScheme.onTertiaryContainer
     }

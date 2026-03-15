@@ -16,10 +16,8 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             TravelAppTheme {
-                // Ottieni il ViewModel in modo corretto
+                // Si ottiene il ViewModel in maniera corretta
                 val viewModel: AppViewModel by viewModels { AppViewModelFactory(this) }
-
-
                 TravelApp(viewModel = viewModel)
             }
         }

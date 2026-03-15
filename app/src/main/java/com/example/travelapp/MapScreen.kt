@@ -154,9 +154,10 @@ fun TrackableMapViewWithTrips(trips: List<Trip>, navController: NavController) {
 // Canvas drawing: https://medium.com/over-engineering/getting-started-with-drawing-on-the-android-canvas-621cf512f4c7
 private fun tripStatusMarkerIcon(context: Context, status: TripStatus): Drawable {
     val color = when (status) {
-        TripStatus.DRAFT -> android.graphics.Color.parseColor("#9E9E9E") // grigio
+        TripStatus.DRAFT       -> android.graphics.Color.parseColor("#9E9E9E") // grigio
+        TripStatus.PLANNED     -> android.graphics.Color.parseColor("#FF9800") // arancione
         TripStatus.IN_PROGRESS -> android.graphics.Color.parseColor("#2196F3") // blu
-        TripStatus.COMPLETED -> android.graphics.Color.parseColor("#4CAF50") // verde
+        TripStatus.COMPLETED   -> android.graphics.Color.parseColor("#4CAF50") // verde
     }
     val size = 64
     val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)

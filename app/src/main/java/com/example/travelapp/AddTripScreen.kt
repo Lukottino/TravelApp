@@ -267,7 +267,7 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit, onBack: () -
                             notes = notes.ifBlank { null },
                             userId = currentUserId,
                             coverImageUri = coverImageUri,
-                            status = computeTripStatus(endDate)
+                            status = computeTripStatus(start, endDate)
                         )
                         scope.launch {
                             try {
