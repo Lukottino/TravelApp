@@ -3,6 +3,11 @@ package com.example.travelapp
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
@@ -17,6 +22,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavController
 import com.example.travelapp.data.model.Trip
+import com.example.travelapp.data.model.TripStatus
 import com.example.travelapp.viewmodel.AppViewModel
 import org.osmdroid.config.Configuration
 import org.osmdroid.tileprovider.tilesource.TileSourceFactory
@@ -131,6 +137,7 @@ fun TrackableMapViewWithTrips(trips: List<Trip>, navController: NavController) {
                 position = GeoPoint(lat, lon)
                 setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
                 title = trip.name
+                icon = tripStatusMarkerIcon(mapView.context, trip.status)
                 setOnMarkerClickListener { _, _ ->
                     navController.navigate("tripDetail/${trip.id}")
                     true
@@ -140,4 +147,31 @@ fun TrackableMapViewWithTrips(trips: List<Trip>, navController: NavController) {
         }
         mapView.invalidate()
     }
+}
+
+// Crea un'icona circolare colorata per il marker in base allo status del viaggio.
+// OSMDroid wiki:  https://github.com/osmdroid/osmdroid/wiki/Markers,-Lines-and-Polygons-(Java)
+// Canvas drawing: https://medium.com/over-engineering/getting-started-with-drawing-on-the-android-canvas-621cf512f4c7
+private fun tripStatusMarkerIcon(context: Context, status: TripStatus): Drawable {
+    val color = when (status) {
+        TripStatus.DRAFT -> android.graphics.Color.parseColor("#9E9E9E") // grigio
+        TripStatus.IN_PROGRESS -> android.graphics.Color.parseColor("#2196F3") // blu
+        TripStatus.COMPLETED -> android.graphics.Color.parseColor("#4CAF50") // verde
+    }
+    val size = 64
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = color
+        style = Paint.Style.FILL
+    }
+    val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        this.color = android.graphics.Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = 5f
+    }
+    val r = size / 2f - 4
+    canvas.drawCircle(size / 2f, size / 2f, r, fillPaint)
+    canvas.drawCircle(size / 2f, size / 2f, r, strokePaint)
+    return BitmapDrawable(context.resources, bitmap)
 }
