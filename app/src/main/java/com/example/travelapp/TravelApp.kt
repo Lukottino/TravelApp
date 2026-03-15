@@ -54,7 +54,7 @@ fun TravelApp(viewModel: AppViewModel) {
             }
 
             // Home / Tabs
-            composable("home") { HomeScreen(viewModel) }
+            composable("home") { HomeScreen(viewModel, navController) }
             composable("trips") { TripsScreen(viewModel = viewModel, navController = navController) }
             composable("addTrip") {
                 AddTripScreen(
@@ -88,7 +88,7 @@ fun TravelApp(viewModel: AppViewModel) {
             composable("map") { MapScreen(viewModel, navController) }
 
             composable("friends") {
-                FriendsScreen(viewModel = viewModel)
+                FriendsScreen(viewModel = viewModel, navController = navController)
             }
 
             // Profile

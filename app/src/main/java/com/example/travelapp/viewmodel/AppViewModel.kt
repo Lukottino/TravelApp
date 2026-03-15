@@ -53,6 +53,11 @@ class AppViewModel(context: Context) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // --- Trips ---
+    fun getFeed(): LiveData<List<Trip>> {
+        val user = _currentUser.value ?: return MutableLiveData(emptyList())
+        return repository.getFeed(user.id)
+    }
+
     fun getTripsForCurrentUser(): LiveData<List<Trip>> {
         val user = _currentUser.value ?: return MutableLiveData(emptyList())
         return repository.getTripsForUser(user.id)

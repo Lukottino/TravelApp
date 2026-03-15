@@ -26,7 +26,7 @@ interface TripDao {
         SELECT DISTINCT t.* FROM trips t
         LEFT JOIN trip_participants tp ON tp.tripId = t.id
         WHERE t.userId = :userId OR tp.userId = :userId
-        ORDER BY t.startDate DESC
+        ORDER BY t.createdAt DESC
     """)
     fun getTripsForUser(userId: Int): LiveData<List<Trip>>
 
@@ -34,15 +34,16 @@ interface TripDao {
         SELECT DISTINCT t.* FROM trips t
         LEFT JOIN trip_participants tp ON tp.tripId = t.id
         WHERE t.userId = :userId OR tp.userId = :userId
-        ORDER BY t.startDate DESC
+        ORDER BY t.createdAt DESC
     """)
     suspend fun getTripsForUserSuspend(userId: Int): List<Trip>
 
     @Query("""
         SELECT DISTINCT t.* FROM trips t
         LEFT JOIN friendships f ON f.userId = :userId
-        WHERE t.userId = :userId OR t.userId = f.friendId
-        ORDER BY t.startDate DESC
+        WHERE (t.userId = :userId OR t.userId = f.friendId)
+          AND t.status != 'DRAFT'
+        ORDER BY t.createdAt DESC
     """)
     fun getFeed(userId: Int): LiveData<List<Trip>>
 }
