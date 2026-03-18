@@ -20,9 +20,14 @@ private val LightColors = lightColorScheme(
 
 @Composable
 fun TravelAppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
+    themeMode: String = "AUTO",
     content: @Composable () -> Unit
 ) {
+    val darkTheme = when (themeMode) {
+        "LIGHT" -> false
+        "DARK"  -> true
+        else    -> isSystemInDarkTheme()
+    }
     val colors = if (darkTheme) DarkColors else LightColors
 
     MaterialTheme(

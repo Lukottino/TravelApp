@@ -34,6 +34,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.livedata.observeAsState
+import com.example.travelapp.data.model.Settings
 import com.example.travelapp.data.model.Trip
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
@@ -69,6 +70,7 @@ private fun ViewProfileContent(
 ) {
     val user by viewModel.currentUser.collectAsState()
     val trips by viewModel.getTripsForCurrentUser().observeAsState(emptyList())
+    val settings by viewModel.settings.observeAsState()
 
     Column(
         modifier = Modifier
@@ -92,6 +94,27 @@ private fun ViewProfileContent(
         Spacer(modifier = Modifier.height(8.dp))
         TextButton(onClick = onLogout) {
             Text("Logout", color = MaterialTheme.colorScheme.error)
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+        HorizontalDivider()
+        Spacer(modifier = Modifier.height(12.dp))
+        Text("Tema", style = MaterialTheme.typography.titleSmall, modifier = Modifier.align(Alignment.Start))
+        Spacer(modifier = Modifier.height(8.dp))
+        val currentTheme = settings?.themeMode ?: "AUTO"
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("LIGHT" to "Chiaro", "DARK" to "Scuro", "AUTO" to "Auto").forEach { (mode, label) ->
+                FilterChip(
+                    selected = currentTheme == mode,
+                    onClick = {
+                        viewModel.saveSettings(
+                            Settings(themeMode = mode, notificationsEnabled = settings?.notificationsEnabled ?: true)
+                        )
+                    },
+                    label = { Text(label) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
         }
 
         if (trips.isNotEmpty()) {

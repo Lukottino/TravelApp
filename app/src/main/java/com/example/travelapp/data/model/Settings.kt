@@ -6,6 +6,6 @@ import androidx.room.PrimaryKey
 @Entity(tableName = "settings")
 data class Settings(
     @PrimaryKey val id: Int = 1, // sempre una sola riga
-    val darkMode: Boolean = false,
+    val themeMode: String = "AUTO", // "LIGHT", "DARK", "AUTO"
     val notificationsEnabled: Boolean = true
 )
