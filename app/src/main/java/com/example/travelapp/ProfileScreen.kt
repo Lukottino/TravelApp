@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Photo
 import androidx.compose.material.icons.filled.FlightTakeoff
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -71,15 +72,31 @@ private fun ViewProfileContent(
     val user by viewModel.currentUser.collectAsState()
     val trips by viewModel.getTripsForCurrentUser().observeAsState(emptyList())
     val settings by viewModel.settings.observeAsState()
+    var showSettings by remember { mutableStateOf(false) }
+
+    if (showSettings) {
+        ModalBottomSheet(onDismissRequest = { showSettings = false }) {
+            SettingsSheetContent(
+                settings = settings,
+                onSave = { mode, notif ->
+                    viewModel.saveSettings(Settings(themeMode = mode, notificationsEnabled = notif))
+                }
+            )
+        }
+    }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .padding(24.dp),
+            .padding(horizontal = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Spacer(modifier = Modifier.height(24.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            IconButton(onClick = { showSettings = true }) {
+                Icon(Icons.Default.Settings, contentDescription = "Impostazioni")
+            }
+        }
         AvatarImage(uri = user?.profileImageUri, modifier = Modifier.size(100.dp))
         Spacer(modifier = Modifier.height(16.dp))
         Text(text = user?.name ?: "", style = MaterialTheme.typography.headlineSmall)
@@ -94,27 +111,6 @@ private fun ViewProfileContent(
         Spacer(modifier = Modifier.height(8.dp))
         TextButton(onClick = onLogout) {
             Text("Logout", color = MaterialTheme.colorScheme.error)
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-        HorizontalDivider()
-        Spacer(modifier = Modifier.height(12.dp))
-        Text("Tema", style = MaterialTheme.typography.titleSmall, modifier = Modifier.align(Alignment.Start))
-        Spacer(modifier = Modifier.height(8.dp))
-        val currentTheme = settings?.themeMode ?: "AUTO"
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf("LIGHT" to "Chiaro", "DARK" to "Scuro", "AUTO" to "Auto").forEach { (mode, label) ->
-                FilterChip(
-                    selected = currentTheme == mode,
-                    onClick = {
-                        viewModel.saveSettings(
-                            Settings(themeMode = mode, notificationsEnabled = settings?.notificationsEnabled ?: true)
-                        )
-                    },
-                    label = { Text(label) },
-                    modifier = Modifier.weight(1f)
-                )
-            }
         }
 
         if (trips.isNotEmpty()) {
@@ -354,6 +350,70 @@ private fun createCameraUri(context: Context): Uri {
     val dir = File(context.cacheDir, "images").also { it.mkdirs() }
     val file = File(dir, "photo_${System.currentTimeMillis()}.jpg")
     return FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+}
+
+@Composable
+private fun SettingsSheetContent(
+    settings: Settings?,
+    onSave: (themeMode: String, notificationsEnabled: Boolean) -> Unit
+) {
+    var themeMode by remember(settings) { mutableStateOf(settings?.themeMode ?: "AUTO") }
+    var notifEnabled by remember(settings) { mutableStateOf(settings?.notificationsEnabled ?: true) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 24.dp)
+            .padding(bottom = 48.dp)
+    ) {
+        Text("Impostazioni", style = MaterialTheme.typography.titleLarge)
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            "Aspetto",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf("LIGHT" to "Chiaro", "DARK" to "Scuro", "AUTO" to "Auto").forEach { (mode, label) ->
+                FilterChip(
+                    selected = themeMode == mode,
+                    onClick = {
+                        themeMode = mode
+                        onSave(themeMode, notifEnabled)
+                    },
+                    label = { Text(label) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        HorizontalDivider()
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Text(
+            "Notifiche",
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text("Abilita notifiche", style = MaterialTheme.typography.bodyMedium)
+            Switch(
+                checked = notifEnabled,
+                onCheckedChange = {
+                    notifEnabled = it
+                    onSave(themeMode, notifEnabled)
+                }
+            )
+        }
+    }
 }
 
 @Composable

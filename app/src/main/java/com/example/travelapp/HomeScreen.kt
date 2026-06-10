@@ -30,7 +30,6 @@ import java.util.*
 @Composable
 fun HomeScreen(viewModel: AppViewModel, navController: NavController) {
     val feed by viewModel.getFeed().observeAsState(emptyList())
-    val currentUser by viewModel.currentUser.collectAsState()
 
     Column(modifier = Modifier.fillMaxSize()) {
         // Header
@@ -71,6 +70,7 @@ fun HomeScreen(viewModel: AppViewModel, navController: NavController) {
 
 @Composable
 fun FeedCard(trip: Trip, viewModel: AppViewModel, onClick: () -> Unit) {
+    val currentUser by viewModel.currentUser.collectAsState()
     val author by produceState<User?>(null, trip.userId) {
         value = viewModel.getUserById(trip.userId)
     }
@@ -184,7 +184,7 @@ fun FeedCard(trip: Trip, viewModel: AppViewModel, onClick: () -> Unit) {
                             )
                         } else {
                             Text(
-                                text = author?.name?.firstOrNull()?.uppercase() ?: "?",
+                                text = if (trip.userId == currentUser?.id) "Tu" else author?.name?.firstOrNull()?.uppercase() ?: "?",
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
@@ -193,7 +193,7 @@ fun FeedCard(trip: Trip, viewModel: AppViewModel, onClick: () -> Unit) {
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = author?.name ?: "",
+                            text = if (trip.userId == currentUser?.id) "Tu" else author?.name ?: "",
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold
                         )
