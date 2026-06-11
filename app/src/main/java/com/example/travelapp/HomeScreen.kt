@@ -81,17 +81,12 @@ fun FeedCard(trip: Trip, viewModel: AppViewModel, onClick: () -> Unit) {
     } ?: "Dal ${dateFormat.format(Date(trip.startDate))}"
 
     val statusContainerColor = when (trip.status) {
-        TripStatus.DRAFT -> MaterialTheme.colorScheme.surfaceVariant
-        TripStatus.PLANNED -> MaterialTheme.colorScheme.secondaryContainer
-        TripStatus.IN_PROGRESS -> MaterialTheme.colorScheme.primaryContainer
-        TripStatus.COMPLETED -> MaterialTheme.colorScheme.tertiaryContainer
+        TripStatus.DRAFT -> androidx.compose.ui.graphics.Color(0xFF9E9E9E)
+        TripStatus.PLANNED -> androidx.compose.ui.graphics.Color(0xFF9E9E9E)
+        TripStatus.IN_PROGRESS -> androidx.compose.ui.graphics.Color(0xFFFFC107)
+        TripStatus.COMPLETED -> androidx.compose.ui.graphics.Color(0xFF4CAF50)
     }
-    val statusContentColor = when (trip.status) {
-        TripStatus.DRAFT -> MaterialTheme.colorScheme.onSurfaceVariant
-        TripStatus.PLANNED -> MaterialTheme.colorScheme.onSecondaryContainer
-        TripStatus.IN_PROGRESS -> MaterialTheme.colorScheme.onPrimaryContainer
-        TripStatus.COMPLETED -> MaterialTheme.colorScheme.onTertiaryContainer
-    }
+    val statusContentColor = androidx.compose.ui.graphics.Color.White
 
     Card(
         modifier = Modifier

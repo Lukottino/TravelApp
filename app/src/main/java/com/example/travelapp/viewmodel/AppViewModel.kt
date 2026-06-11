@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.map
 import androidx.lifecycle.viewModelScope
 import com.example.travelapp.data.database.AppDatabase
 import com.example.travelapp.data.model.*
@@ -57,17 +58,22 @@ class AppViewModel(context: Context) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     // --- Trips ---
+    private fun Trip.withComputedStatus(): Trip {
+        if (status == TripStatus.DRAFT) return this
+        return copy(status = computeTripStatus(startDate, endDate))
+    }
+
     fun getFeed(): LiveData<List<Trip>> {
         val user = _currentUser.value ?: return MutableLiveData(emptyList())
-        return repository.getFeed(user.id)
+        return repository.getFeed(user.id).map { trips -> trips.map { it.withComputedStatus() } }
     }
 
     fun getTripsForCurrentUser(): LiveData<List<Trip>> {
         val user = _currentUser.value ?: return MutableLiveData(emptyList())
-        return repository.getTripsForUser(user.id)
+        return repository.getTripsForUser(user.id).map { trips -> trips.map { it.withComputedStatus() } }
     }
 
-    fun getTripById(tripId: Int): LiveData<Trip> = repository.getTripById(tripId)
+    fun getTripById(tripId: Int): LiveData<Trip> = repository.getTripById(tripId).map { it.withComputedStatus() }
     fun addTrip(trip: Trip) = viewModelScope.launch {
         val tripId = repository.insertTrip(trip)
         val userId = _currentUser.value?.id ?: return@launch
@@ -152,7 +158,7 @@ class AppViewModel(context: Context) : ViewModel() {
 
     // --- Users ---
     suspend fun getUserById(id: Int): User? = repository.getUserById(id)
-    suspend fun getTripsForUser(userId: Int): List<Trip> = repository.getTripsForUserList(userId)
+    suspend fun getTripsForUser(userId: Int): List<Trip> = repository.getTripsForUserList(userId).map { it.withComputedStatus() }
 
     fun searchUsers(query: String, onResult: (List<User>) -> Unit) {
         val userId = _currentUser.value?.id ?: return

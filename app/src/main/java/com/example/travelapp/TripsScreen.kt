@@ -1,5 +1,6 @@
 package com.example.travelapp
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,12 +13,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.filled.Place
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.travelapp.viewmodel.AppViewModel
 import com.example.travelapp.data.model.Trip
 import androidx.navigation.NavController
+import coil.compose.AsyncImage
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -38,6 +45,13 @@ fun TripsScreen(viewModel: AppViewModel, navController: NavController) {
                     .padding(16.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                item {
+                    Text(
+                        text = "I tuoi viaggi",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.padding(bottom = 4.dp)
+                    )
+                }
                 items(trips) { trip ->
                     TripItem(trip = trip, onClick = {
                         navController.navigate("tripDetail/${trip.id}")
@@ -59,36 +73,90 @@ fun TripsScreen(viewModel: AppViewModel, navController: NavController) {
 
 @Composable
 fun TripItem(trip: Trip, onClick: () -> Unit) {
-    val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
-    val startDateStr = dateFormat.format(Date(trip.startDate))
-    val dateRangeStr = trip.endDate?.let { "Dal $startDateStr al ${dateFormat.format(Date(it))}" } ?: "Dal $startDateStr"
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() }, // <--- Card cliccabile
+            .clickable { onClick() },
         elevation = CardDefaults.cardElevation(6.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Column(modifier = Modifier.padding(16.dp)) {
+        Column {
+            if (trip.coverImageUri != null) {
+                AsyncImage(
+                    model = trip.coverImageUri,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .background(
+                            Brush.verticalGradient(
+                                listOf(
+                                    MaterialTheme.colorScheme.primary,
+                                    MaterialTheme.colorScheme.tertiary
+                                )
+                            )
+                        )
+                )
+            }
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 12.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(text = trip.name, style = MaterialTheme.typography.titleLarge)
-                SuggestionChip(
-                    onClick = {},
-                    label = { Text(trip.status.label, style = MaterialTheme.typography.labelSmall) }
-                )
-            }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = "Destinazione: ${trip.destination}", style = MaterialTheme.typography.bodyMedium)
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(text = dateRangeStr, style = MaterialTheme.typography.bodySmall)
-            if (!trip.notes.isNullOrBlank()) {
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(text = "Note: ${trip.notes}", style = MaterialTheme.typography.bodySmall)
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = trip.name,
+                        style = MaterialTheme.typography.titleMedium,
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Place,
+                            contentDescription = null,
+                            modifier = Modifier.size(12.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(modifier = Modifier.width(2.dp))
+                        Text(
+                            text = trip.destination,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                        )
+                    }
+                }
+                Spacer(modifier = Modifier.width(8.dp))
+                val statusContainerColor = when (trip.status) {
+                    com.example.travelapp.data.model.TripStatus.DRAFT -> androidx.compose.ui.graphics.Color(0xFF9E9E9E)
+                    com.example.travelapp.data.model.TripStatus.PLANNED -> androidx.compose.ui.graphics.Color(0xFF9E9E9E)
+                    com.example.travelapp.data.model.TripStatus.IN_PROGRESS -> androidx.compose.ui.graphics.Color(0xFFFFC107)
+                    com.example.travelapp.data.model.TripStatus.COMPLETED -> androidx.compose.ui.graphics.Color(0xFF4CAF50)
+                }
+                val statusContentColor = androidx.compose.ui.graphics.Color.White
+                Surface(
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(50),
+                    color = statusContainerColor,
+                    modifier = Modifier.width(100.dp)
+                ) {
+                    Text(
+                        text = trip.status.label,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = statusContentColor,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                    )
+                }
             }
         }
     }

@@ -107,17 +107,12 @@ fun TripDetailScreen(
     val dateRangeStr = trip.endDate?.let { "Dal $startStr al ${dateFormat.format(Date(it))}" } ?: "Dal $startStr"
 
     val statusContainerColor = when (trip.status) {
-        TripStatus.DRAFT -> MaterialTheme.colorScheme.surfaceVariant
-        TripStatus.PLANNED -> MaterialTheme.colorScheme.secondaryContainer
-        TripStatus.IN_PROGRESS -> MaterialTheme.colorScheme.primaryContainer
-        TripStatus.COMPLETED -> MaterialTheme.colorScheme.tertiaryContainer
+        TripStatus.DRAFT -> androidx.compose.ui.graphics.Color(0xFF9E9E9E)
+        TripStatus.PLANNED -> androidx.compose.ui.graphics.Color(0xFF9E9E9E)
+        TripStatus.IN_PROGRESS -> androidx.compose.ui.graphics.Color(0xFFFFC107)
+        TripStatus.COMPLETED -> androidx.compose.ui.graphics.Color(0xFF4CAF50)
     }
-    val statusContentColor = when (trip.status) {
-        TripStatus.DRAFT -> MaterialTheme.colorScheme.onSurfaceVariant
-        TripStatus.PLANNED -> MaterialTheme.colorScheme.onSecondaryContainer
-        TripStatus.IN_PROGRESS -> MaterialTheme.colorScheme.onPrimaryContainer
-        TripStatus.COMPLETED -> MaterialTheme.colorScheme.onTertiaryContainer
-    }
+    val statusContentColor = androidx.compose.ui.graphics.Color.White
 
     Column(
         modifier = Modifier
