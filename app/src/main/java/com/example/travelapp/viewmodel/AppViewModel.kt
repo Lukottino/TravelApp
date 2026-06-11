@@ -177,6 +177,11 @@ class AppViewModel(context: Context) : ViewModel() {
         viewModelScope.launch { repository.acceptFriendRequest(request) }
     }
 
+    fun removeFriend(friend: User) {
+        val userId = _currentUser.value?.id ?: return
+        viewModelScope.launch { repository.removeFriend(userId, friend.id) }
+    }
+
     fun rejectFriendRequest(request: FriendRequest) {
         viewModelScope.launch { repository.rejectFriendRequest(request) }
     }

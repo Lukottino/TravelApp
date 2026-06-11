@@ -26,4 +26,7 @@ interface FriendshipDao {
         WHERE userId = :userId AND friendId = :friendId
     """)
     suspend fun areFriends(userId: Int, friendId: Int): Int
+
+    @Query("DELETE FROM friendships WHERE (userId = :userId AND friendId = :friendId) OR (userId = :friendId AND friendId = :userId)")
+    suspend fun removeFriendship(userId: Int, friendId: Int)
 }

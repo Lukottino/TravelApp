@@ -1,6 +1,7 @@
 package com.example.travelapp
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
@@ -100,7 +101,7 @@ fun FriendsScreen(viewModel: AppViewModel, navController: NavController) {
                     }
 
                     if (showRequests) {
-                        items(incomingRequests, key = { it.id }) { request ->
+                        items(incomingRequests, key = { "req_${it.id}" }) { request ->
                             RequestItem(request = request, viewModel = viewModel)
                         }
                     }
@@ -126,8 +127,8 @@ fun FriendsScreen(viewModel: AppViewModel, navController: NavController) {
                         )
                     }
                 } else {
-                    items(friends, key = { it.id }) { friend ->
-                        FriendItem(user = friend, onClick = { selectedFriend = friend })
+                    items(friends, key = { "friend_${it.id}" }) { friend ->
+                        FriendItem(user = friend, onClick = { selectedFriend = friend }, onRemove = { viewModel.removeFriend(friend) })
                     }
                 }
 
@@ -143,7 +144,7 @@ fun FriendsScreen(viewModel: AppViewModel, navController: NavController) {
                         )
                     }
                 } else {
-                    items(searchResults, key = { it.id }) { user ->
+                    items(searchResults, key = { "search_${it.id}" }) { user ->
                         SearchResultItem(
                             user = user,
                             isFriend = friends.any { it.id == user.id },
@@ -190,22 +191,25 @@ private fun RequestsBanner(count: Int, expanded: Boolean, onToggle: () -> Unit) 
 // --- Amico ---
 
 @Composable
-private fun FriendItem(user: User, onClick: () -> Unit) {
-    Card(
-        onClick = onClick,
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+private fun FriendItem(user: User, onClick: () -> Unit, onRemove: () -> Unit) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(horizontal = 4.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
     ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically
+        AvatarImage(uri = user.profileImageUri, modifier = Modifier.size(48.dp))
+        Spacer(modifier = Modifier.width(12.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(user.name, style = MaterialTheme.typography.bodyLarge)
+            Text(user.email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        OutlinedButton(
+            onClick = onRemove,
+            modifier = Modifier.padding(start = 8.dp)
         ) {
-            AvatarImage(uri = user.profileImageUri, modifier = Modifier.size(48.dp))
-            Spacer(modifier = Modifier.width(12.dp))
-            Column {
-                Text(user.name, style = MaterialTheme.typography.bodyLarge)
-                Text(user.email, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            Text("Rimuovi", style = MaterialTheme.typography.labelMedium)
         }
     }
 }

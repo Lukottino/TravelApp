@@ -49,6 +49,7 @@ class AppRepository(
     // --- Friends ---
     fun getFriends(userId: Int): Flow<List<User>> = friendshipDao.getFriends(userId)
     suspend fun areFriends(userId: Int, friendId: Int): Boolean = friendshipDao.areFriends(userId, friendId) > 0
+    suspend fun removeFriend(userId: Int, friendId: Int) = friendshipDao.removeFriendship(userId, friendId)
 
     // --- Friend Requests ---
     fun getIncomingRequests(userId: Int): Flow<List<FriendRequest>> = friendRequestDao.getIncomingRequests(userId)
