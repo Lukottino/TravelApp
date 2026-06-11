@@ -8,10 +8,14 @@ import androidx.lifecycle.viewModelScope
 import com.example.travelapp.data.database.AppDatabase
 import com.example.travelapp.data.model.*
 import com.example.travelapp.data.repository.AppRepository
+import androidx.work.*
+import androidx.work.WorkManager
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 
 class AppViewModel(context: Context) : ViewModel() {
+    private val workManager = WorkManager.getInstance(context.applicationContext)
     private val database = AppDatabase.getDatabase(context)
     private val repository = AppRepository(
         database.tripDao(),
@@ -68,9 +72,16 @@ class AppViewModel(context: Context) : ViewModel() {
         val tripId = repository.insertTrip(trip)
         val userId = _currentUser.value?.id ?: return@launch
         repository.insertParticipant(TripParticipant(tripId.toInt(), userId, TripRole.OWNER))
+        scheduleReminders(trip.copy(id = tripId.toInt()))
     }
-    fun updateTrip(trip: Trip) = viewModelScope.launch { repository.updateTrip(trip) }
-    fun deleteTrip(trip: Trip) = viewModelScope.launch { repository.deleteTrip(trip) }
+    fun updateTrip(trip: Trip) = viewModelScope.launch {
+        repository.updateTrip(trip)
+        scheduleReminders(trip)
+    }
+    fun deleteTrip(trip: Trip) = viewModelScope.launch {
+        repository.deleteTrip(trip)
+        cancelReminders(trip.id)
+    }
 
     // --- Photos ---
     fun getPhotosForTrip(tripId: Int): kotlinx.coroutines.flow.Flow<List<com.example.travelapp.data.model.TripPhoto>> =
@@ -162,5 +173,41 @@ class AppViewModel(context: Context) : ViewModel() {
 
     fun rejectFriendRequest(request: FriendRequest) {
         viewModelScope.launch { repository.rejectFriendRequest(request) }
+    }
+
+    private fun scheduleReminders(trip: Trip) {
+        if (settings.value?.notificationsEnabled == false) return
+        cancelReminders(trip.id)
+
+        val now = System.currentTimeMillis()
+        val dayMs = 24 * 60 * 60 * 1000L
+
+        val tomorrowDelay = trip.startDate - dayMs - now
+        if (tomorrowDelay > 0) {
+            enqueueReminder("trip_tomorrow_${trip.id}", trip, isTomorrow = true, delay = tomorrowDelay)
+        }
+
+        val todayDelay = trip.startDate - now
+        if (todayDelay > 0) {
+            enqueueReminder("trip_today_${trip.id}", trip, isTomorrow = false, delay = todayDelay)
+        }
+    }
+
+    private fun enqueueReminder(uniqueName: String, trip: Trip, isTomorrow: Boolean, delay: Long) {
+        val request = OneTimeWorkRequestBuilder<com.example.travelapp.TripReminderWorker>()
+            .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+            .setInputData(workDataOf(
+                com.example.travelapp.TripReminderWorker.KEY_TRIP_ID to trip.id,
+                com.example.travelapp.TripReminderWorker.KEY_TRIP_NAME to trip.name,
+                com.example.travelapp.TripReminderWorker.KEY_DESTINATION to trip.destination,
+                com.example.travelapp.TripReminderWorker.KEY_IS_TOMORROW to isTomorrow
+            ))
+            .build()
+        workManager.enqueueUniqueWork(uniqueName, ExistingWorkPolicy.REPLACE, request)
+    }
+
+    private fun cancelReminders(tripId: Int) {
+        workManager.cancelUniqueWork("trip_tomorrow_$tripId")
+        workManager.cancelUniqueWork("trip_today_$tripId")
     }
 }

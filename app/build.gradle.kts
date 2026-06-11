@@ -45,15 +45,16 @@ android {
 }
 
 dependencies {
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.11.0")
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("androidx.datastore:datastore-preferences:1.1.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
-    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-runtime:2.7.1")
     implementation(libs.androidx.runtime.livedata)
-    kapt("androidx.room:room-compiler:2.6.1")  // serve per generare codice
-    implementation("androidx.room:room-ktx:2.6.1") // supporto coroutine Kotlin
+    kapt("androidx.room:room-compiler:2.7.1")
+    implementation("androidx.room:room-ktx:2.7.1")
     implementation("org.osmdroid:osmdroid-android:6.1.16")
     implementation("androidx.compose.material:material-icons-extended:1.6.4")
     implementation(libs.androidx.core.ktx)

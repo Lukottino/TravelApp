@@ -74,7 +74,7 @@ fun AddTripScreen(viewModel: AppViewModel, onTripAdded: () -> Unit, onBack: () -
     }
 
     val currentUserId = viewModel.currentUser.value?.id ?: 0
-    val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
 
     Scaffold(
         topBar = {

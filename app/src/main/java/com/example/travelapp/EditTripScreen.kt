@@ -66,7 +66,7 @@ fun EditTripScreen(viewModel: AppViewModel, tripId: Int, onTripUpdated: () -> Un
         }
     }
 
-    val dateFormat = SimpleDateFormat("dd MMM yyyy", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale.getDefault())
 
     if (showImagePicker) {
         ModalBottomSheet(onDismissRequest = { showImagePicker = false }) {
