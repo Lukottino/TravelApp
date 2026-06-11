@@ -71,6 +71,7 @@ fun HomeScreen(viewModel: AppViewModel, navController: NavController) {
 @Composable
 fun FeedCard(trip: Trip, viewModel: AppViewModel, onClick: () -> Unit) {
     val currentUser by viewModel.currentUser.collectAsState()
+    val participants by remember(trip.id) { viewModel.getParticipants(trip.id) }.collectAsState(initial = emptyList())
     val author by produceState<User?>(null, trip.userId) {
         value = viewModel.getUserById(trip.userId)
     }
@@ -192,8 +193,14 @@ fun FeedCard(trip: Trip, viewModel: AppViewModel, onClick: () -> Unit) {
                     }
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
+                        val othersCount = (participants.size - 1).coerceAtLeast(0)
+                        val othersLabel = when (othersCount) {
+                            0 -> ""
+                            1 -> " e un altro"
+                            else -> " e altri $othersCount"
+                        }
                         Text(
-                            text = if (trip.userId == currentUser?.id) "Tu" else author?.name ?: "",
+                            text = if (trip.userId == currentUser?.id) "Tu$othersLabel" else (author?.name ?: "?") + othersLabel,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold
                         )

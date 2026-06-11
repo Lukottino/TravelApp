@@ -5,7 +5,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.ui.graphics.Brush
@@ -39,7 +38,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.travelapp.data.model.TripPhoto
 import com.example.travelapp.data.model.TripStatus
-import com.example.travelapp.data.model.User
 import com.example.travelapp.viewmodel.AppViewModel
 import java.text.SimpleDateFormat
 import java.util.*
