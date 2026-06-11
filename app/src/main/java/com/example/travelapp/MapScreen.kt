@@ -4,13 +4,16 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
+import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Paint
+import android.graphics.Shader
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
+import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -58,14 +61,17 @@ fun MapScreen(viewModel: AppViewModel, navController: NavController) {
     }
 
     val trips by viewModel.getTripsForCurrentUser().observeAsState(emptyList())
-    TrackableMapViewWithTrips(trips, navController)
+    val currentUser by viewModel.currentUser.collectAsState()
+    TrackableMapViewWithTrips(trips, navController, currentUser?.profileImageUri)
 }
 
 @Composable
-fun TrackableMapViewWithTrips(trips: List<Trip>, navController: NavController) {
+fun TrackableMapViewWithTrips(trips: List<Trip>, navController: NavController, profileImageUri: String? = null) {
     val context = LocalContext.current
 
     Configuration.getInstance().load(context, context.getSharedPreferences("osmdroid", Context.MODE_PRIVATE))
+
+    val userMarkerRef = remember { mutableStateOf<Marker?>(null) }
 
     val map = remember {
         MapView(context).apply {
@@ -100,8 +106,17 @@ fun TrackableMapViewWithTrips(trips: List<Trip>, navController: NavController) {
                 val userMarker = Marker(map).apply {
                     position = startPoint
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
-                    title = "Tu sei qui"
+                    icon = userProfileMarkerIcon(context, profileImageUri)
+                    setOnMarkerClickListener { _, _ ->
+                        navController.navigate("profile") {
+                            popUpTo(navController.graph.startDestinationId) { saveState = true }
+                            launchSingleTop = true
+                            restoreState = true
+                        }
+                        true
+                    }
                 }
+                userMarkerRef.value = userMarker
                 map.overlays.add(userMarker)
 
                 locationListener = object : LocationListener {
@@ -128,7 +143,7 @@ fun TrackableMapViewWithTrips(trips: List<Trip>, navController: NavController) {
     ) { mapView ->
         // Rimuovi i marker dei viaggi precedenti e riaggiungi quelli aggiornati
         mapView.overlays.removeAll(
-            mapView.overlays.filterIsInstance<Marker>().filter { it.title != "Tu sei qui" }
+            mapView.overlays.filterIsInstance<Marker>().filter { it != userMarkerRef.value }
         )
         trips.forEach { trip ->
             val lat = trip.latitude ?: return@forEach
@@ -147,6 +162,49 @@ fun TrackableMapViewWithTrips(trips: List<Trip>, navController: NavController) {
         }
         mapView.invalidate()
     }
+}
+
+private fun userProfileMarkerIcon(context: Context, profileImageUri: String?): Drawable {
+    val size = 64
+    val bitmap = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val r = size / 2f - 4f
+
+    if (profileImageUri != null) {
+        val source = runCatching {
+            context.contentResolver.openInputStream(Uri.parse(profileImageUri))?.use {
+                android.graphics.BitmapFactory.decodeStream(it)
+            }
+        }.getOrNull()
+
+        if (source != null) {
+            val scaled = Bitmap.createScaledBitmap(source, size, size, true)
+            val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+                shader = BitmapShader(scaled, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+            }
+            canvas.drawCircle(size / 2f, size / 2f, r, paint)
+        } else {
+            drawFallbackCircle(canvas, size, r)
+        }
+    } else {
+        drawFallbackCircle(canvas, size, r)
+    }
+
+    val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = 5f
+    }
+    canvas.drawCircle(size / 2f, size / 2f, r, strokePaint)
+    return BitmapDrawable(context.resources, bitmap)
+}
+
+private fun drawFallbackCircle(canvas: Canvas, size: Int, r: Float) {
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = android.graphics.Color.parseColor("#2196F3")
+        style = Paint.Style.FILL
+    }
+    canvas.drawCircle(size / 2f, size / 2f, r, paint)
 }
 
 // Crea un'icona circolare colorata per il marker in base allo status del viaggio.
