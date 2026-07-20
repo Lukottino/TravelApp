@@ -49,7 +49,8 @@ fun TravelApp(viewModel: AppViewModel) {
                         navController.navigate("home") {
                             popUpTo("register") { inclusive = true }
                         }
-                    }
+                    },
+                    onNavigateBack = { navController.popBackStack() }
                 )
             }
 
